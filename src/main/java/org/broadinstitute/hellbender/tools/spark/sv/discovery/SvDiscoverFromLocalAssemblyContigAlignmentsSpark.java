@@ -48,7 +48,7 @@ import static org.broadinstitute.hellbender.tools.spark.sv.StructuralVariationDi
 import static org.broadinstitute.hellbender.tools.spark.sv.discovery.inference.AssemblyContigAlignmentSignatureClassifier.RawTypes;
 
 /**
- * (Internal) Examines aligned contigs from local assemblies and calls complex structural variants
+ * (Internal) Examines aligned contigs from local assemblies and calls structural variants or their breakpoints
  *
  * <p>This tool is used in development and should not be of interest to most researchers.  It is a prototype of
  * complex structural variant calling, and has been superseded by other tools.</p>
@@ -82,14 +82,16 @@ import static org.broadinstitute.hellbender.tools.spark.sv.discovery.inference.A
 @DocumentedFeature
 @BetaFeature
 @CommandLineProgramProperties(
-        oneLineSummary = "(Internal) Examines aligned contigs from local assemblies and calls complex structural variants",
+        oneLineSummary = "(Internal) Examines aligned contigs from local assemblies and calls structural variants or their breakpoints",
         summary =
-        "This tool is used in development and should not be of interest to most researchers.  It is a prototype of" +
-        " complex structural variant calling, and has been superseded by other tools." +
-        " This tool takes a file containing the alignments of assembled contigs and searches for reads with" +
-        " split alignments indicating the presence of structural variation breakpoints. The alignment signatures of the" +
-        " split alignments are analyzed to determine the type of structural variation and written to a VCF file." +
-        " The input file is typically the output file produced by FindBreakpointEvidenceSpark.",
+        "This tool is used in development and should not be of interest to most researchers. It is a prototype of" +
+        " structural variant calling, and has been under active developments. For more stable version," +
+        " please see DiscoverVariantsFromContigAlignmentsSAMSpark." +
+        " This tool takes a file containing the alignments of assembled contigs" +
+        " (typically the output file produced by FindBreakpointEvidenceSpark) and searches for reads with" +
+        " split alignments or large gaps indicating the presence of structural variation breakpoints." +
+        " Variations' types are determined by analyzing the signatures of the split alignments," +
+        " and are written to VCF files in the designated output directory.",
         programGroup = StructuralVariantDiscoveryProgramGroup.class)
 public final class SvDiscoverFromLocalAssemblyContigAlignmentsSpark extends GATKSparkTool {
     private static final long serialVersionUID = 1L;
@@ -249,15 +251,16 @@ public final class SvDiscoverFromLocalAssemblyContigAlignmentsSpark extends GATK
                         // future implementation may integrate other types of evidence and re-interpret if necessary
                         .flatMap(pair -> {
                             final List<SvType> svTypes = pair._2;
-                            final SimpleNovelAdjacency simpleNovelAdjacency = pair._1;
+                            final SimpleNovelAdjacencyAndChimericAlignmentEvidence simpleNovelAdjacencyAndChimericAlignmentEvidence = pair._1;
                             if (svTypes.size() == 1) { // simple SV type
                                 final SvType inferredType = svTypes.get(0);
-                                final NovelAdjacencyReferenceLocations narl = simpleNovelAdjacency.getNovelAdjacencyReferenceLocations();
-                                final SimpleInterval variantPos = narl.leftJustifiedLeftRefLoc;
-                                final int end = narl.leftJustifiedRightRefLoc.getEnd();
+                                final NovelAdjacencyAndInferredAltHaptype narl = simpleNovelAdjacencyAndChimericAlignmentEvidence.getNovelAdjacencyReferenceLocations();
+                                final SimpleInterval variantPos = narl.getLeftJustifiedLeftRefLoc();
+                                final int end = narl.getLeftJustifiedRightRefLoc().getEnd();
                                 final VariantContext variantContext = AnnotatedVariantProducer
-                                        .produceAnnotatedVcFromInferredTypeAndRefLocations(variantPos, end, narl.complication,
-                                                inferredType, simpleNovelAdjacency.getAltHaplotypeSequence(), simpleNovelAdjacency.getAlignmentEvidence(),
+                                        .produceAnnotatedVcFromInferredTypeAndRefLocations(variantPos, end, narl.getComplication(),
+                                                inferredType, simpleNovelAdjacencyAndChimericAlignmentEvidence.getAltHaplotypeSequence(),
+                                                simpleNovelAdjacencyAndChimericAlignmentEvidence.getAlignmentEvidence(),
                                                 referenceBroadcast, referenceSequenceDictionaryBroadcast, cnvCallsBroadcast, sampleId);
                                 return Collections.singletonList(variantContext).iterator();
                             } else { // BND mate pair
@@ -267,9 +270,9 @@ public final class SvDiscoverFromLocalAssemblyContigAlignmentsSpark extends GATK
                                 final Tuple2<BreakEndVariantType, BreakEndVariantType> bndMates = new Tuple2<>(firstMate, secondMate);
                                 final List<VariantContext> variantContexts = AnnotatedVariantProducer
                                         .produceAnnotatedBNDmatesVcFromNovelAdjacency(
-                                                simpleNovelAdjacency.getNovelAdjacencyReferenceLocations(),
+                                                simpleNovelAdjacencyAndChimericAlignmentEvidence.getNovelAdjacencyReferenceLocations(),
                                                 bndMates,
-                                                simpleNovelAdjacency.getAlignmentEvidence(),
+                                                simpleNovelAdjacencyAndChimericAlignmentEvidence.getAlignmentEvidence(),
                                                 referenceBroadcast, referenceSequenceDictionaryBroadcast, sampleId);
                                 return variantContexts.iterator();
                             }

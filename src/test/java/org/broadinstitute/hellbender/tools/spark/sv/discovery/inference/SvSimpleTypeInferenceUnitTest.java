@@ -1,16 +1,15 @@
 package org.broadinstitute.hellbender.tools.spark.sv.discovery.inference;
 
 import com.google.common.collect.ImmutableSet;
+import org.broadinstitute.hellbender.GATKBaseTest;
 import org.broadinstitute.hellbender.tools.spark.sv.discovery.SVDiscoveryTestDataProvider;
 import org.broadinstitute.hellbender.tools.spark.sv.discovery.SimpleSVType;
 import org.broadinstitute.hellbender.tools.spark.sv.discovery.SvType;
 import org.broadinstitute.hellbender.tools.spark.sv.utils.GATKSVVCFConstants;
-import org.broadinstitute.hellbender.GATKBaseTest;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.Set;
 
@@ -27,7 +26,7 @@ public class SvSimpleTypeInferenceUnitTest extends GATKBaseTest {
     }
 
 
-    private static void seeIfItWorks_typeInference(final NovelAdjacencyReferenceLocations breakpoints,
+    private static void seeIfItWorks_typeInference(final NovelAdjacencyAndInferredAltHaptype breakpoints,
                                                    final String expectedTypeString,
                                                    final Set<String> expectedFlags) {
 
@@ -40,10 +39,10 @@ public class SvSimpleTypeInferenceUnitTest extends GATKBaseTest {
     }
 
     @Test(groups = "sv")
-    public void testGetType() throws IOException {
+    public void testGetType() {
 
         // inversion
-        NovelAdjacencyReferenceLocations breakpoints = SVDiscoveryTestDataProvider.forSimpleInversionFromLongCtg1WithStrangeLeftBreakpoint._3();
+        NovelAdjacencyAndInferredAltHaptype breakpoints = SVDiscoveryTestDataProvider.forSimpleInversionFromLongCtg1WithStrangeLeftBreakpoint._3();
         seeIfItWorks_typeInference(breakpoints, SimpleSVType.TYPES.INV.name(), ImmutableSet.of(GATKSVVCFConstants.INV33));
 
         breakpoints = SVDiscoveryTestDataProvider.forSimpleInversionWithHom_leftPlus._3();
