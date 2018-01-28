@@ -266,8 +266,40 @@ abstract class BreakpointsInference {
 
         private byte[] extractAltHaplotypeSeq(final ChimericAlignment simpleChimera,
                                               final byte[] contigSequence) {
-            // TODO: 1/25/18 to be implemented
-            return new byte[0];
+            final BreakpointComplications.SmallDuplicationBreakpointComplications moreSpecificComplications =
+                    (BreakpointComplications.SmallDuplicationBreakpointComplications) complications;
+
+            final ChimericAlignment.DistancesBetweenAlignmentsOnRefAndOnRead distances =
+                    new ChimericAlignment.DistancesBetweenAlignmentsOnRefAndOnRead(simpleChimera);
+
+            final byte[] altSeq;
+            if (moreSpecificComplications.isDupAnnotImprecise()) {
+                altSeq = new byte[0];       // TODO: 1/27/18 to be implemented
+            } else {
+                if (moreSpecificComplications.isDupContraction()) {
+                    altSeq = new byte[0];   // TODO: 1/27/18 to be implemented
+                } else {
+                    final List<String> cigarStringsForDupSeqOnCtg = moreSpecificComplications.getCigarStringsForDupSeqOnCtg();
+
+                    final Cigar cigarForFirstCopyOnCtg, cigarForSecondCopyOnCtg;
+                    if (simpleChimera.isForwardStrandRepresentation) {
+                        cigarForFirstCopyOnCtg = TextCigarCodec.decode(cigarStringsForDupSeqOnCtg.get(0));
+                        cigarForSecondCopyOnCtg = TextCigarCodec.decode(cigarStringsForDupSeqOnCtg.get(1));
+                    } else {
+                        cigarForFirstCopyOnCtg = TextCigarCodec.decode(cigarStringsForDupSeqOnCtg.get(1));
+                        cigarForSecondCopyOnCtg = TextCigarCodec.decode(cigarStringsForDupSeqOnCtg.get(0));
+                    }
+
+                    final int zeroBasedStart = distances.firstAlnCtgEnd - cigarForFirstCopyOnCtg.getReadLength();
+                    final int zeroBasedEnd = distances.secondAlnCtgStart + cigarForSecondCopyOnCtg.getReadLength() - 1;
+
+                    altSeq = Arrays.copyOfRange(contigSequence, zeroBasedStart, zeroBasedEnd);
+                    if (!simpleChimera.isForwardStrandRepresentation) {
+                        SequenceUtil.reverseComplement(altSeq);
+                    }
+                }
+            }
+            return altSeq;
         }
     }
 
