@@ -277,7 +277,12 @@ abstract class BreakpointsInference {
                 altSeq = new byte[0];       // TODO: 1/27/18 to be implemented
             } else {
                 if (moreSpecificComplications.isDupContraction()) {
-                    altSeq = new byte[0];   // TODO: 1/27/18 to be implemented
+                    final int zeroBasedStart = distances.secondAlnCtgStart - 1;
+                    final int zeroBasedEnd =  distances.firstAlnCtgEnd;
+                    altSeq = Arrays.copyOfRange(contigSequence, zeroBasedStart, zeroBasedEnd);
+                    if (!simpleChimera.isForwardStrandRepresentation) {
+                        SequenceUtil.reverseComplement(altSeq);
+                    }
                 } else {
                     final List<String> cigarStringsForDupSeqOnCtg = moreSpecificComplications.getCigarStringsForDupSeqOnCtg();
 
