@@ -91,7 +91,8 @@ public class NovelAdjacencyAndInferredAltHaptypeUnitTest extends GATKBaseTest {
         final NovelAdjacencyAndInferredAltHaptype breakpoints = SVDiscoveryTestDataProvider.forSimpleInversionWithNovelInsertion._3();
         seeIfItWorksForNonSimpleTranslocations(breakpoints, StrandSwitch.FORWARD_TO_REVERSE,
                 new SimpleInterval("21", 69294, 69294), new SimpleInterval("21", 69364, 69364),
-                null, "", "T", 0, 0, null);
+                null, "", "T", 0, 0, null,
+                new byte[]{'T'});
     }
 
     @Test(groups = "sv")
@@ -102,7 +103,8 @@ public class NovelAdjacencyAndInferredAltHaptypeUnitTest extends GATKBaseTest {
                 new SimpleInterval(SVDiscoveryTestDataProvider.chrForLongContig1, 20138006, 20138006),
                 new SimpleInterval(SVDiscoveryTestDataProvider.chrForLongContig1, 20152650, 20152650),
                 null, "TGAGGTCAGGAGTTCCTGATCCCATCTTTACTAAAAATACAAAACTTACCCAGGGTGGTTGTGCACACTTGTAATCCCAGCTACTTGGGAGGCTGAGGCAGGAGAATTGCTTGAACAAGGGAGGAAATGGTTGCAGTGAGCCATGATCATGCCACTGAACCCCAGCCTGGGCAAGAGAGTGAGACTGTCTCAAAAAAAAAAAAAACTGTTTAATTTTTATGAATGCAGGTTTTCTGCAAACACTACACATAACTATGCTAATTGTTCTGAAGTAATAAATAGAAAGCAAGGCACAACTACAGACTCCACTGTTCAGTTTATGCACTGAACTGTTCTTGCTTTTGCAGTGTAAGTATTTCTGCCTGCAAATACTGGATAATTACCTTGGATCATCAGATTTCTATCAAAGGAATTTAGTATCTTTTAGTCTTTATCATTTTGTATTGCTAAATTTATCTGTGTGTTAAGCTTCTGTGTGCTCTTAAAATGAGGTTTTATCTAAACAAACCTGTGTCTACTTTAAAAGACTAAACATGAAAAAACTAAACTTTTCAGAACCAAAAACAAAGCAATAAATCTGAAGTACTAGATAGTCTGGAGTGAGATTTATTTAGCTTTTTT",
-                "", 0, 0, null);
+                "", 0, 0, null,
+                new byte[0]);
     }
 
     /**
@@ -117,7 +119,8 @@ public class NovelAdjacencyAndInferredAltHaptypeUnitTest extends GATKBaseTest {
         final NovelAdjacencyAndInferredAltHaptype breakpointsIdentifiedFromLeftFlankingEvidenceAndForwardStrand = SVDiscoveryTestDataProvider.forSimpleInversionWithHom_leftPlus._3();
         seeIfItWorksForNonSimpleTranslocations(breakpointsIdentifiedFromLeftFlankingEvidenceAndForwardStrand, StrandSwitch.FORWARD_TO_REVERSE,
                 new SimpleInterval("20", 200, 200), new SimpleInterval("20", 605, 605),
-                null, new String(homology), "", 0, 0, null);
+                null, new String(homology), "", 0, 0, null,
+                new byte[0]);
 
         // see if reverse strand changes anything
         Assert.assertEquals(breakpointsIdentifiedFromLeftFlankingEvidenceAndForwardStrand, SVDiscoveryTestDataProvider.forSimpleInversionWithHom_leftMinus._3());
@@ -138,9 +141,9 @@ public class NovelAdjacencyAndInferredAltHaptypeUnitTest extends GATKBaseTest {
     @Test(groups = "sv")
     public void testGetAssembledBreakpointsFromAlignmentIntervalsWithOverlappingAlignmentInterval() {
         final byte[] contigSequence = "ACTAGAGCATCTACGTGTTCCTGTGGTTTTGGAGCAAGAGTGATTTGAGTTTCAGAGATTTTTACTAATTCTTCTTCCCCTACCAGAAAAAAAGATCTTACCATTTGAGAGTGAGATGTAAACCCAGCCCTGTCTGACCTGAGTCTGTGCCCTAAGCCTATGCTAAGCCAAGCAGTGCCTGGAGCCACCACAGGTCCACACAATTCGTTAACATGATGAAGCAAGGATGGAAATTGGACAAAATAGTGTGCCTACTGAATCTAAGAATGAAAAATGATTGCACTCCTACTCTGAGTGCTTTGGAGCACTGCCCAGTTGGGCAAAGGGTCAGCGCCTGGGCAGAGGTCCCCACAACCTGGCAGGAGTGTGGTCGGCCACCCTATGGGCCTCCATCATGTGCAGTGACAGCGGGGCTGTCATGTCACCGTGTGGGAGGGCTTGCAGGTGAAGTGGTCTGGGAGGGGTCCCCCAGACAAAGCCAAGGTTCTGAGAGTTGGCCCGAACACTGCTGGATTCCACTTCACCTGCAAGCCCTCCCACACGGTGACATGACAGCCTATAATACAGTTCCGCATGGCCACGTCATACAACCCTGTCATATTGGTGAGCAATTGCTGTGTAGCCAAAGACCCCAAAACTCAAACAGCATTTATTATTATTGCCCCCATGTCTGAGAGTCAGATGTGCATTTGCTGATCTCAGCTTGTTTGAGCTGCTGCAGGGTTGGGGCTCTGCTCCAGGCAGGCTTAGCTGTCACCACATGCACACATACATTCTGGGCCTCTGCTGCGCGCGTCACGTTCACTGAAGATCTTGGGATTGGGAGTTAGGGCGGTGGGAGGGCCCAGCAAAGTCACCTGGCGATGGCAGGGACACAGGGAGGAATGTAGAATGGGGCCGATGATGGGACCCACACGTCTGCAAAGCTGCGGTCTCCTTGAGGGGTGGAGACAGCAACAACTCACCGCACGCGGTGCTTCAGTTCACCATCTCCCTGGGACATTAGGGGGCCCCGTGTTATCTCATTTTGCTCTGGTTTGCATTAGTTTTTTATCACTTCGTAGATGAAGCCACTGACACCCAGAGAGGGAAAGTGGCCTGACCAAGGGCCACAGCAGGGGAGCGAAGGAGCCCCACAGTTCGGCAGGAACACAGCCTCTCCCTGGCTTTCAGGTTCACTGACATCTTCTCATGGCCTCTGTAACTCACCAGGCATCAGGGTGTAGTCCTTAGACCAGTGTCCCACAGCTGCCACAGAGTGGGAGCTCACCATCAGTTATAAGTCACTAGAAAGGCTTTTGGACATTATAAGCTACAATGGAAAATAAGTCATCTGTGGATTTTTGTGACAGATTCCAAAAATTTGAATATTTTGTCTACTTAGGTTTTTGGTTAATTTTATCCTCAAAACTGTTCTGCAGTGATTAAGCTGTACAAACTGCATCATGGGCGAATTGGCATATTCAGAAATGACTGATATTCTTGATTTCAGTTTTTTACTTTGTATGTAGCTCCTCAAGGAAAC".getBytes();
-        final AlignmentInterval region1 = new AlignmentInterval(new SimpleInterval("20", 23102817, 23103304), 1, 487, TextCigarCodec.decode("487M1006S"), true, 60, 1, 100, ContigAlignmentsModifier.AlnModType.NONE);
-        final AlignmentInterval region2 = new AlignmentInterval(new SimpleInterval("20", 23103196, 23103238), 484, 525, TextCigarCodec.decode("483S42M968S"), false, 60, 2, 100, ContigAlignmentsModifier.AlnModType.NONE);
-        final AlignmentInterval region3 = new AlignmentInterval(new SimpleInterval("20", 23103633, 23104603), 524, 1493, TextCigarCodec.decode("523S970M"), true, 60, 3, 100, ContigAlignmentsModifier.AlnModType.NONE);
+        final AlignmentInterval region1 = new AlignmentInterval(new SimpleInterval("20", 23102785, 23103304), 1, 519, TextCigarCodec.decode("519M1006S"), true, 60, 1, 100, ContigAlignmentsModifier.AlnModType.NONE);
+        final AlignmentInterval region2 = new AlignmentInterval(new SimpleInterval("20", 23103196, 23103238), 516, 557, TextCigarCodec.decode("515S42M968S"), false, 60, 2, 100, ContigAlignmentsModifier.AlnModType.NONE);
+        final AlignmentInterval region3 = new AlignmentInterval(new SimpleInterval("20", 23103633, 23104603), 556, 1525, TextCigarCodec.decode("555S970M"), true, 60, 3, 100, ContigAlignmentsModifier.AlnModType.NONE);
 
         final AlignedContig alignedContig = new AlignedContig("asm00001:tig0001", contigSequence, Arrays.asList(region1, region2, region3), false);
         final List<ChimericAlignment> assembledBreakpointsFromAlignmentIntervals = ChimericAlignment.parseOneContig(alignedContig, SVDiscoveryTestDataProvider.seqDict, true, StructuralVariationDiscoveryArgumentCollection.DiscoverVariantsFromContigsAlignmentsSparkArgumentCollection.DEFAULT_MIN_ALIGNMENT_LENGTH, StructuralVariationDiscoveryArgumentCollection.DiscoverVariantsFromContigsAlignmentsSparkArgumentCollection.CHIMERIC_ALIGNMENTS_HIGHMQ_THRESHOLD, true);
@@ -150,11 +153,12 @@ public class NovelAdjacencyAndInferredAltHaptypeUnitTest extends GATKBaseTest {
         Assert.assertEquals(chimericAlignment.regionWithLowerCoordOnContig, region1);
         Assert.assertEquals(chimericAlignment.regionWithHigherCoordOnContig, region3);
         Assert.assertEquals(chimericAlignment.insertionMappings.size(), 1);
-        final String expectedInsertionMappingsString = String.join(AlignmentInterval.PACKED_STRING_REP_SEPARATOR, "484", "525", "20:23103196-23103238", "-", "483S42M968S", "60", "2", "100", "O");
+        final String expectedInsertionMappingsString = String.join(AlignmentInterval.PACKED_STRING_REP_SEPARATOR, "516", "557", "20:23103196-23103238", "-", "515S42M968S", "60", "2", "100", "O");
         Assert.assertEquals(chimericAlignment.insertionMappings.get(0), expectedInsertionMappingsString);
         final NovelAdjacencyAndInferredAltHaptype breakpoints = new NovelAdjacencyAndInferredAltHaptype(chimericAlignment, contigSequence, SVDiscoveryTestDataProvider.seqDict);
         Assert.assertTrue(breakpoints.getComplication().getHomologyForwardStrandRep().isEmpty());
-        Assert.assertEquals(breakpoints.getComplication().getInsertedSequenceForwardStrandRep(), "TGAGAGTTGGCCCGAACACTGCTGGATTCCACTTCA");
+        Assert.assertEquals(breakpoints.getComplication().getInsertedSequenceForwardStrandRep().getBytes(), Arrays.copyOfRange(contigSequence, 519, 555));
+        Assert.assertEquals(breakpoints.getAltHaplotypeSequence(), Arrays.copyOfRange(contigSequence, 519, 555));
     }
 
     // following might be legacy tests that could be removed but needs time to investigate (Dec.13/2016)
@@ -199,7 +203,8 @@ public class NovelAdjacencyAndInferredAltHaptypeUnitTest extends GATKBaseTest {
         final NovelAdjacencyAndInferredAltHaptype breakpointsDetectedFromReverseStrand = SVDiscoveryTestDataProvider.forSimpleDeletion_minus._3();
 
         seeIfItWorksForNonSimpleTranslocations(breakpoints, StrandSwitch.NO_SWITCH, new SimpleInterval("21", 100040, 100040), new SimpleInterval("21", 100060, 100060),
-                null, "", "", 0, 0, null);
+                null, "", "", 0, 0, null,
+                new byte[0]);
         Assert.assertEquals(breakpointsDetectedFromReverseStrand, breakpoints);
     }
 
@@ -209,13 +214,14 @@ public class NovelAdjacencyAndInferredAltHaptypeUnitTest extends GATKBaseTest {
     @Test(groups = "sv")
     public void testGetBreakpoints_simpleInsertion() {
 
-        byte[] insertedSeq  = SVDiscoveryTestDataProvider.makeDummySequence(50, (byte)'C');
+        final byte[] insertedSeq  = SVDiscoveryTestDataProvider.makeDummySequence(50, (byte)'C');
 
         final NovelAdjacencyAndInferredAltHaptype breakpoints = SVDiscoveryTestDataProvider.forSimpleInsertion_plus._3();
         final NovelAdjacencyAndInferredAltHaptype breakpointsDetectedFromReverseStrand = SVDiscoveryTestDataProvider.forSimpleInsertion_minus._3();
 
         seeIfItWorksForNonSimpleTranslocations(breakpoints, StrandSwitch.NO_SWITCH, new SimpleInterval("21", 100100, 100100), new SimpleInterval("21", 100100, 100100),
-                null, "", new String(insertedSeq), 0, 0, null);
+                null, "", new String(insertedSeq), 0, 0, null,
+                insertedSeq);
         Assert.assertEquals(breakpointsDetectedFromReverseStrand, breakpoints);
     }
 
@@ -230,7 +236,8 @@ public class NovelAdjacencyAndInferredAltHaptypeUnitTest extends GATKBaseTest {
         final NovelAdjacencyAndInferredAltHaptype breakpointsDetectedFromReverseStrand = SVDiscoveryTestDataProvider.forLongRangeSubstitution_minus._3();
 
         seeIfItWorksForNonSimpleTranslocations(breakpoints, StrandSwitch.NO_SWITCH, new SimpleInterval("21", 100040, 100040), new SimpleInterval("21", 100060, 100060),
-                null, "", new String(substitution), 0, 0, null);
+                null, "", new String(substitution), 0, 0, null,
+                substitution);
         Assert.assertEquals(breakpointsDetectedFromReverseStrand, breakpoints);
     }
 
@@ -246,7 +253,8 @@ public class NovelAdjacencyAndInferredAltHaptypeUnitTest extends GATKBaseTest {
         final NovelAdjacencyAndInferredAltHaptype breakpointsDetectedFromReverseStrand = SVDiscoveryTestDataProvider.forDeletionWithHomology_minus._3();
 
         seeIfItWorksForNonSimpleTranslocations(breakpoints, StrandSwitch.NO_SWITCH, new SimpleInterval("21", 100040, 100040), new SimpleInterval("21", 100078, 100078),
-                null, new String(homology), "", 0, 0, null);
+                null, new String(homology), "", 0, 0, null,
+                new byte[0]);
         Assert.assertEquals(breakpointsDetectedFromReverseStrand, breakpoints);
     }
 
@@ -262,7 +270,8 @@ public class NovelAdjacencyAndInferredAltHaptypeUnitTest extends GATKBaseTest {
         seeIfItWorksForNonSimpleTranslocations(breakpoints, StrandSwitch.NO_SWITCH, new SimpleInterval("21", 100040, 100040), new SimpleInterval("21", 100050, 100050),
                 new SimpleInterval("21", 100041, 100050),
                 new String(SVDiscoveryTestDataProvider.makeDummySequence(10, (byte)'C')), "",
-                2, 1, Collections.emptyList());
+                2, 1, Collections.emptyList(),
+                SVDiscoveryTestDataProvider.makeDummySequence(10, (byte)'C'));
         Assert.assertEquals(breakpointsDetectedFromReverseStrand, breakpoints);
     }
 
@@ -278,7 +287,8 @@ public class NovelAdjacencyAndInferredAltHaptypeUnitTest extends GATKBaseTest {
         seeIfItWorksForNonSimpleTranslocations(breakpoints, StrandSwitch.NO_SWITCH, new SimpleInterval("21", 100040, 100040), new SimpleInterval("21", 100040, 100040),
                 new SimpleInterval("21", 100041, 100050),
                 "", "",
-                1, 2, Arrays.asList("10M", "10M"));
+                1, 2, Arrays.asList("10M", "10M"),
+                SVDiscoveryTestDataProvider.makeDummySequence(20, (byte)'C'));
         Assert.assertEquals(breakpointsDetectedFromReverseStrand, breakpoints);
     }
 
@@ -288,16 +298,18 @@ public class NovelAdjacencyAndInferredAltHaptypeUnitTest extends GATKBaseTest {
     @Test(groups = "sv")
     public void testGetBreakpoints_tandemDuplication_expansion_andNovelInsertion() {
 
-        final byte[] insertedSeq = "CTCTCTCTCT".getBytes();                                                                           //10
-        final byte[] dup = "AAAAGTAAATGTTATAAGAAATCTTAAGTATTATTTTCTTATGTTTCTAGCCTAATAAAGTGCTTTTATTAAAGCACTTTATTTAAAGG".getBytes();    //89
+        final String insertedSeq = "CTCTCTCTCT";                                                                           //10
+        final String dup = "AAAAGTAAATGTTATAAGAAATCTTAAGTATTATTTTCTTATGTTTCTAGCCTAATAAAGTGCTTTTATTAAAGCACTTTATTTAAAGG";    //89
+        final String alt = dup + insertedSeq + dup;
 
         final NovelAdjacencyAndInferredAltHaptype breakpoints = SVDiscoveryTestDataProvider.forSimpleTanDupExpansionWithNovelIns_plus._3();
         final NovelAdjacencyAndInferredAltHaptype breakpointsDetectedFromReverseStrand = SVDiscoveryTestDataProvider.forSimpleTanDupExpansionWithNovelIns_minus._3();
 
         seeIfItWorksForNonSimpleTranslocations(breakpoints, StrandSwitch.NO_SWITCH, new SimpleInterval("21", 25297163, 25297163), new SimpleInterval("21", 25297163, 25297163),
                 new SimpleInterval("21", 25297164,25297252),
-                "", new String(insertedSeq),
-                1, 2, Arrays.asList("89M", "89M"));
+                "", insertedSeq,
+                1, 2, Arrays.asList("89M", "89M"),
+                alt.getBytes());
         Assert.assertEquals(breakpointsDetectedFromReverseStrand, breakpoints);
     }
 
@@ -305,11 +317,13 @@ public class NovelAdjacencyAndInferredAltHaptypeUnitTest extends GATKBaseTest {
                                                                final SimpleInterval expectedLeftBreakpoint, final SimpleInterval expectedRightBreakpoint,
                                                                final SimpleInterval expectedRepeatUnitRefSpan, final String expectedHomology, final String expectedInsertion,
                                                                final int expectedRefDupNum, final int expectedCtgDupNum,
-                                                               final List<String> expectedTandupCigarStrings) {
+                                                               final List<String> expectedTandupCigarStrings,
+                                                               final byte[] expectedAltHaplotypeSequence) {
 
         Assert.assertEquals(breakpoints.getLeftJustifiedLeftRefLoc(), expectedLeftBreakpoint);
         Assert.assertEquals(breakpoints.getLeftJustifiedRightRefLoc(), expectedRightBreakpoint);
         Assert.assertEquals(breakpoints.getStrandSwitch(), expectedStrandSwitch);
+        Assert.assertEquals(breakpoints.getAltHaplotypeSequence(), expectedAltHaplotypeSequence);
         if (expectedStrandSwitch.equals(StrandSwitch.NO_SWITCH)) {
             if (expectedRepeatUnitRefSpan == null) {
                 final BreakpointComplications.SimpleInsDelOrReplacementBreakpointComplications complication =
@@ -377,17 +391,9 @@ public class NovelAdjacencyAndInferredAltHaptypeUnitTest extends GATKBaseTest {
         Assert.assertEquals(breakpoints.getLeftJustifiedLeftRefLoc(), new SimpleInterval("20", 312609, 312609));
         Assert.assertEquals(breakpoints.getLeftJustifiedRightRefLoc(), new SimpleInterval("20", 312609, 312609));
         Assert.assertEquals(breakpoints.getStrandSwitch(), StrandSwitch.NO_SWITCH);
-
-        breakpoints = SVDiscoveryTestDataProvider.forComplexTanDup_1to2_pseudoHom_minus._3();
-        complication = (BreakpointComplications.SmallDuplicationBreakpointComplications) breakpoints.getComplication();
-        Assert.assertTrue(StringUtils.getLevenshteinDistance(complication.getHomologyForwardStrandRep(), pseudoHomology)<=2);
-        Assert.assertTrue(complication.getInsertedSequenceForwardStrandRep().isEmpty());
-        Assert.assertEquals(complication.getDupSeqRepeatUnitRefSpan(), new SimpleInterval("20", 312610, 312705));
-        Assert.assertEquals(complication.getDupSeqRepeatNumOnRef(), 1);
-        Assert.assertEquals(complication.getDupSeqRepeatNumOnCtg(), 2);
-        Assert.assertEquals(breakpoints.getLeftJustifiedLeftRefLoc(), new SimpleInterval("20", 312609, 312609));
-        Assert.assertEquals(breakpoints.getLeftJustifiedRightRefLoc(), new SimpleInterval("20", 312609, 312609));
-        Assert.assertEquals(breakpoints.getStrandSwitch(), StrandSwitch.NO_SWITCH);
+        Assert.assertEquals(breakpoints.getAltHaplotypeSequence(), (firstRepeat+secondRepeat+pseudoHomology).getBytes());
+        NovelAdjacencyAndInferredAltHaptype breakpointsRev = SVDiscoveryTestDataProvider.forComplexTanDup_1to2_pseudoHom_minus._3();
+        Assert.assertEquals(breakpointsRev, breakpoints); // different representation, should lead to same result
 
         // second test: contraction from 2 units to 1 unit with pseudo-homology
         breakpoints = SVDiscoveryTestDataProvider.forComplexTanDup_2to1_pseudoHom_plus._3();
@@ -400,17 +406,9 @@ public class NovelAdjacencyAndInferredAltHaptypeUnitTest extends GATKBaseTest {
         Assert.assertEquals(breakpoints.getLeftJustifiedLeftRefLoc(), new SimpleInterval("20", 312609, 312609));
         Assert.assertEquals(breakpoints.getLeftJustifiedRightRefLoc(), new SimpleInterval("20", 312705, 312705));
         Assert.assertEquals(breakpoints.getStrandSwitch(), StrandSwitch.NO_SWITCH);
-
-        breakpoints = SVDiscoveryTestDataProvider.forComplexTanDup_2to1_pseudoHom_minus._3();
-        complication = (BreakpointComplications.SmallDuplicationBreakpointComplications) breakpoints.getComplication();
-        Assert.assertTrue(StringUtils.getLevenshteinDistance(complication.getHomologyForwardStrandRep(), firstRepeat+pseudoHomology)<=2);
-        Assert.assertTrue(complication.getInsertedSequenceForwardStrandRep().isEmpty());
-        Assert.assertEquals(complication.getDupSeqRepeatUnitRefSpan(), new SimpleInterval("20", 312610, 312705));
-        Assert.assertEquals(complication.getDupSeqRepeatNumOnRef(), 2);
-        Assert.assertEquals(complication.getDupSeqRepeatNumOnCtg(), 1);
-        Assert.assertEquals(breakpoints.getLeftJustifiedLeftRefLoc(), new SimpleInterval("20", 312609, 312609));
-        Assert.assertEquals(breakpoints.getLeftJustifiedRightRefLoc(), new SimpleInterval("20", 312705, 312705));
-        Assert.assertEquals(breakpoints.getStrandSwitch(), StrandSwitch.NO_SWITCH);
+        Assert.assertEquals(breakpoints.getAltHaplotypeSequence(), (firstRepeat+pseudoHomology).getBytes());
+        breakpointsRev = SVDiscoveryTestDataProvider.forComplexTanDup_2to1_pseudoHom_minus._3();
+        Assert.assertEquals(breakpointsRev, breakpoints); // different representation, should lead to same result
 
         // third test: contraction from 3 units to 2 units without pseudo-homology
         breakpoints = SVDiscoveryTestDataProvider.forComplexTanDup_3to2_noPseudoHom_plus._3();
@@ -423,17 +421,9 @@ public class NovelAdjacencyAndInferredAltHaptypeUnitTest extends GATKBaseTest {
         Assert.assertEquals(breakpoints.getLeftJustifiedLeftRefLoc(), new SimpleInterval("20", 312609, 312609));
         Assert.assertEquals(breakpoints.getLeftJustifiedRightRefLoc(), new SimpleInterval("20", 312705, 312705));
         Assert.assertEquals(breakpoints.getStrandSwitch(), StrandSwitch.NO_SWITCH);
-
-        breakpoints = SVDiscoveryTestDataProvider.forComplexTanDup_3to2_noPseudoHom_minus._3();
-        complication = (BreakpointComplications.SmallDuplicationBreakpointComplications) breakpoints.getComplication();
-        Assert.assertTrue(StringUtils.getLevenshteinDistance(complication.getHomologyForwardStrandRep(), firstRepeat+secondRepeat)<=2);
-        Assert.assertTrue(complication.getInsertedSequenceForwardStrandRep().isEmpty());
-        Assert.assertEquals(complication.getDupSeqRepeatUnitRefSpan(), new SimpleInterval("20", 312610, 312705));
-        Assert.assertEquals(complication.getDupSeqRepeatNumOnRef(), 3);
-        Assert.assertEquals(complication.getDupSeqRepeatNumOnCtg(), 2);
-        Assert.assertEquals(breakpoints.getLeftJustifiedLeftRefLoc(), new SimpleInterval("20", 312609, 312609));
-        Assert.assertEquals(breakpoints.getLeftJustifiedRightRefLoc(), new SimpleInterval("20", 312705, 312705));
-        Assert.assertEquals(breakpoints.getStrandSwitch(), StrandSwitch.NO_SWITCH);
+        Assert.assertEquals(breakpoints.getAltHaplotypeSequence(), (firstRepeat+secondRepeat).getBytes());
+        breakpointsRev = SVDiscoveryTestDataProvider.forComplexTanDup_3to2_noPseudoHom_minus._3();
+        Assert.assertEquals(breakpointsRev, breakpoints); // different representation, should lead to same result
 
         // fourth test: expansion from 2 units to 3 units without pseudo-homology
         breakpoints = SVDiscoveryTestDataProvider.forComplexTanDup_2to3_noPseudoHom_plus._3();
@@ -446,16 +436,9 @@ public class NovelAdjacencyAndInferredAltHaptypeUnitTest extends GATKBaseTest {
         Assert.assertEquals(breakpoints.getLeftJustifiedLeftRefLoc(), new SimpleInterval("20", 312609, 312609));
         Assert.assertEquals(breakpoints.getLeftJustifiedRightRefLoc(), new SimpleInterval("20", 312609, 312609));
         Assert.assertEquals(breakpoints.getStrandSwitch(), StrandSwitch.NO_SWITCH);
+        Assert.assertEquals(breakpoints.getAltHaplotypeSequence(), (firstRepeat+secondRepeat+firstRepeat).getBytes());
+        breakpointsRev = SVDiscoveryTestDataProvider.forComplexTanDup_2to3_noPseudoHom_minus._3();
+        Assert.assertEquals(breakpointsRev, breakpoints); // different representation, should lead to same result
 
-        breakpoints = SVDiscoveryTestDataProvider.forComplexTanDup_2to3_noPseudoHom_minus._3();
-        complication = (BreakpointComplications.SmallDuplicationBreakpointComplications) breakpoints.getComplication();
-        Assert.assertTrue(StringUtils.getLevenshteinDistance(complication.getHomologyForwardStrandRep(), firstRepeat)<=2);
-        Assert.assertTrue(complication.getInsertedSequenceForwardStrandRep().isEmpty());
-        Assert.assertEquals(complication.getDupSeqRepeatUnitRefSpan(), new SimpleInterval("20", 312610, 312705));
-        Assert.assertEquals(complication.getDupSeqRepeatNumOnRef(), 2);
-        Assert.assertEquals(complication.getDupSeqRepeatNumOnCtg(), 3);
-        Assert.assertEquals(breakpoints.getLeftJustifiedLeftRefLoc(), new SimpleInterval("20", 312609, 312609));
-        Assert.assertEquals(breakpoints.getLeftJustifiedRightRefLoc(), new SimpleInterval("20", 312609, 312609));
-        Assert.assertEquals(breakpoints.getStrandSwitch(), StrandSwitch.NO_SWITCH);
     }
 }

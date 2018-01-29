@@ -1,6 +1,7 @@
 package org.broadinstitute.hellbender.tools.spark.sv.discovery.inference;
 
 import htsjdk.samtools.Cigar;
+import htsjdk.samtools.CigarOperator;
 import htsjdk.samtools.SAMSequenceDictionary;
 import htsjdk.samtools.TextCigarCodec;
 import htsjdk.samtools.util.SequenceUtil;
@@ -10,6 +11,8 @@ import org.broadinstitute.hellbender.engine.datasources.ReferenceMultiSource;
 import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.tools.spark.sv.discovery.alignment.AlignmentInterval;
 import org.broadinstitute.hellbender.tools.spark.sv.discovery.alignment.StrandSwitch;
+import org.broadinstitute.hellbender.tools.spark.sv.discovery.inference.BreakpointComplications.*;
+import org.broadinstitute.hellbender.tools.spark.sv.discovery.inference.ChimericAlignment.DistancesBetweenAlignmentsOnRefAndOnRead;
 import org.broadinstitute.hellbender.tools.spark.sv.utils.SvCigarUtils;
 import org.broadinstitute.hellbender.utils.IntervalUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
@@ -185,7 +188,7 @@ abstract class BreakpointsInference {
         @Override
         void resolveComplications(final ChimericAlignment simpleChimera, final byte[] contigSequence) {
             complications =
-                    new BreakpointComplications.SimpleInsDelOrReplacementBreakpointComplications(simpleChimera, contigSequence);
+                    new SimpleInsDelOrReplacementBreakpointComplications(simpleChimera, contigSequence);
         }
 
         protected SimpleInsertionDeletionBreakpointsInference (final ChimericAlignment simpleChimera,
@@ -225,7 +228,7 @@ abstract class BreakpointsInference {
         @Override
         void resolveComplications(final ChimericAlignment simpleChimera, final byte[] contigSequence) {
             complications =
-                    new BreakpointComplications.SmallDuplicationBreakpointComplications(simpleChimera, contigSequence);
+                    new SmallDuplicationBreakpointComplications(simpleChimera, contigSequence);
         }
 
         SmallDuplicationBreakpointsInference(final ChimericAlignment simpleChimera,
@@ -233,14 +236,30 @@ abstract class BreakpointsInference {
                                              final SAMSequenceDictionary referenceDictionary) {
             super(simpleChimera, contigSequence);
 
-            final BreakpointComplications.SmallDuplicationBreakpointComplications moreSpecificComplications =
-                    (BreakpointComplications.SmallDuplicationBreakpointComplications) complications;
-
             upstreamBreakpointRefContig
                     = downstreamBreakpointRefContig
                     = simpleChimera.regionWithLowerCoordOnContig.referenceSpan.getContig();
 
-            final int homologyLen = moreSpecificComplications.getHomologyForwardStrandRep().length();
+            final SmallDuplicationBreakpointComplications dupComplications =
+                    (SmallDuplicationBreakpointComplications) complications;
+            final DistancesBetweenAlignmentsOnRefAndOnRead distances =
+                    new DistancesBetweenAlignmentsOnRefAndOnRead(simpleChimera);
+
+            if ( dupComplications.isDupAnnotImprecise() ) {
+                workForImpreciseDups(simpleChimera, contigSequence, dupComplications, distances);
+            } else {
+                workForPreciseDups(simpleChimera, contigSequence, dupComplications, distances);
+            }
+
+            validateInferredLocations(simpleChimera, referenceDictionary);
+        }
+
+        private void workForPreciseDups(final ChimericAlignment simpleChimera,
+                                        final byte[] contigSequence,
+                                        final SmallDuplicationBreakpointComplications dupComplications,
+                                        final DistancesBetweenAlignmentsOnRefAndOnRead distances) {
+
+            final int homologyLen = dupComplications.getHomologyForwardStrandRep().length();
 
             final SimpleInterval leftReferenceInterval, rightReferenceInterval;
             if (simpleChimera.isForwardStrandRepresentation) {
@@ -250,61 +269,109 @@ abstract class BreakpointsInference {
                 leftReferenceInterval  = simpleChimera.regionWithHigherCoordOnContig.referenceSpan;
                 rightReferenceInterval = simpleChimera.regionWithLowerCoordOnContig.referenceSpan;
             }
-            final int expansionUnitDiff = moreSpecificComplications.getDupSeqRepeatNumOnCtg() - moreSpecificComplications.getDupSeqRepeatNumOnRef();
-            if ( expansionUnitDiff > 0 ) {
-                upstreamBreakpointRefPos = leftReferenceInterval.getEnd() - homologyLen
-                        - (expansionUnitDiff) * moreSpecificComplications.getDupSeqRepeatUnitRefSpan().size();
-            } else {
+
+            if ( dupComplications.isDupContraction() ) {
                 upstreamBreakpointRefPos = leftReferenceInterval.getEnd() - homologyLen;
-            }
-            downstreamBreakpointRefPos = rightReferenceInterval.getStart() - 1;
+                downstreamBreakpointRefPos = rightReferenceInterval.getStart() - 1;
 
-            altHaplotypeSequence = extractAltHaplotypeSeq(simpleChimera, contigSequence);
-
-            validateInferredLocations(simpleChimera, referenceDictionary);
-        }
-
-        private byte[] extractAltHaplotypeSeq(final ChimericAlignment simpleChimera,
-                                              final byte[] contigSequence) {
-            final BreakpointComplications.SmallDuplicationBreakpointComplications moreSpecificComplications =
-                    (BreakpointComplications.SmallDuplicationBreakpointComplications) complications;
-
-            final ChimericAlignment.DistancesBetweenAlignmentsOnRefAndOnRead distances =
-                    new ChimericAlignment.DistancesBetweenAlignmentsOnRefAndOnRead(simpleChimera);
-
-            final byte[] altSeq;
-            if (moreSpecificComplications.isDupAnnotImprecise()) {
-                altSeq = new byte[0];       // TODO: 1/27/18 to be implemented
+                final int zeroBasedStart = distances.secondAlnCtgStart - 1;
+                final int zeroBasedEnd =  distances.firstAlnCtgEnd;
+                altHaplotypeSequence = Arrays.copyOfRange(contigSequence, zeroBasedStart, zeroBasedEnd);
+                if (!simpleChimera.isForwardStrandRepresentation) {
+                    SequenceUtil.reverseComplement(altHaplotypeSequence);
+                }
             } else {
-                if (moreSpecificComplications.isDupContraction()) {
-                    final int zeroBasedStart = distances.secondAlnCtgStart - 1;
-                    final int zeroBasedEnd =  distances.firstAlnCtgEnd;
-                    altSeq = Arrays.copyOfRange(contigSequence, zeroBasedStart, zeroBasedEnd);
-                    if (!simpleChimera.isForwardStrandRepresentation) {
-                        SequenceUtil.reverseComplement(altSeq);
-                    }
+                final int expansionUnitDiff = dupComplications.getDupSeqRepeatNumOnCtg()
+                                                -
+                                              dupComplications.getDupSeqRepeatNumOnRef();
+                upstreamBreakpointRefPos = leftReferenceInterval.getEnd()
+                                           - homologyLen
+                                           - (expansionUnitDiff) * dupComplications.getDupSeqRepeatUnitRefSpan().size();
+                downstreamBreakpointRefPos = rightReferenceInterval.getStart() - 1;
+
+                final List<String> cigarStringsForDupSeqOnCtg = dupComplications.getCigarStringsForDupSeqOnCtg();
+
+                final Cigar cigarForFirstCopyOnCtg, cigarForSecondCopyOnCtg;
+                if (simpleChimera.isForwardStrandRepresentation) {
+                    cigarForFirstCopyOnCtg = TextCigarCodec.decode(cigarStringsForDupSeqOnCtg.get(0));
+                    cigarForSecondCopyOnCtg = TextCigarCodec.decode(cigarStringsForDupSeqOnCtg.get(1));
                 } else {
-                    final List<String> cigarStringsForDupSeqOnCtg = moreSpecificComplications.getCigarStringsForDupSeqOnCtg();
+                    cigarForFirstCopyOnCtg = TextCigarCodec.decode(cigarStringsForDupSeqOnCtg.get(1));
+                    cigarForSecondCopyOnCtg = TextCigarCodec.decode(cigarStringsForDupSeqOnCtg.get(0));
+                }
 
-                    final Cigar cigarForFirstCopyOnCtg, cigarForSecondCopyOnCtg;
-                    if (simpleChimera.isForwardStrandRepresentation) {
-                        cigarForFirstCopyOnCtg = TextCigarCodec.decode(cigarStringsForDupSeqOnCtg.get(0));
-                        cigarForSecondCopyOnCtg = TextCigarCodec.decode(cigarStringsForDupSeqOnCtg.get(1));
-                    } else {
-                        cigarForFirstCopyOnCtg = TextCigarCodec.decode(cigarStringsForDupSeqOnCtg.get(1));
-                        cigarForSecondCopyOnCtg = TextCigarCodec.decode(cigarStringsForDupSeqOnCtg.get(0));
-                    }
+                final int zeroBasedStart = distances.firstAlnCtgEnd - cigarForFirstCopyOnCtg.getReadLength();
+                final int zeroBasedEnd = distances.secondAlnCtgStart + cigarForSecondCopyOnCtg.getReadLength() - 1;
 
-                    final int zeroBasedStart = distances.firstAlnCtgEnd - cigarForFirstCopyOnCtg.getReadLength();
-                    final int zeroBasedEnd = distances.secondAlnCtgStart + cigarForSecondCopyOnCtg.getReadLength() - 1;
-
-                    altSeq = Arrays.copyOfRange(contigSequence, zeroBasedStart, zeroBasedEnd);
-                    if (!simpleChimera.isForwardStrandRepresentation) {
-                        SequenceUtil.reverseComplement(altSeq);
-                    }
+                altHaplotypeSequence = Arrays.copyOfRange(contigSequence, zeroBasedStart, zeroBasedEnd);
+                if (!simpleChimera.isForwardStrandRepresentation) {
+                    SequenceUtil.reverseComplement(altHaplotypeSequence);
                 }
             }
-            return altSeq;
+        }
+
+        private void workForImpreciseDups(final ChimericAlignment simpleChimera,
+                                          final byte[] contigSequence,
+                                          final SmallDuplicationBreakpointComplications dupComplications,
+                                          final DistancesBetweenAlignmentsOnRefAndOnRead distances) {
+            final int homologyLen = dupComplications.getHomologyForwardStrandRep().length();
+            final SimpleInterval leftReferenceInterval, rightReferenceInterval;
+            if (simpleChimera.isForwardStrandRepresentation) {
+                leftReferenceInterval  = simpleChimera.regionWithLowerCoordOnContig.referenceSpan;
+                rightReferenceInterval = simpleChimera.regionWithHigherCoordOnContig.referenceSpan;
+            } else {
+                leftReferenceInterval  = simpleChimera.regionWithHigherCoordOnContig.referenceSpan;
+                rightReferenceInterval = simpleChimera.regionWithLowerCoordOnContig.referenceSpan;
+            }
+            // TODO: 1/29/18 to be implemented in code
+            // PLAN: (note both d_r and d_a < 0; the docs use 1-based coordinate)
+            //  For contraction: |d_r| < |d_a|
+            //      ALT_SEQ: extract sequence [c2b, c1e], RC if '-'-representation
+            //  For expansion:   |d_r| > |d_a|
+            //      ALT_SEQ: remember to RC if '-'-representation
+            //      ALT_SEQ_BEG: starting at c1e, walk on read backward (with 1st cigar remember to take care of hard clipped bases) a distance corresponding to |d_r| + 2;
+            //      ALT_SEQ_END: starting at c2b, walk on read forward  (with 2nd cigar remember to take care of hard clipped bases) a distance corresponding to |d_r| + 2;
+            if ( dupComplications.isDupContraction() ) {
+                upstreamBreakpointRefPos = leftReferenceInterval.getEnd() - homologyLen;
+                downstreamBreakpointRefPos = rightReferenceInterval.getStart() - 1;
+
+                altHaplotypeSequence = Arrays.copyOfRange(contigSequence,
+                                                    distances.secondAlnCtgStart - 1, distances.firstAlnCtgEnd);
+                if (!simpleChimera.isForwardStrandRepresentation) {
+                    SequenceUtil.reverseComplement(altHaplotypeSequence);
+                }
+            } else {
+                final int expansionUnitDiff = dupComplications.getDupSeqRepeatNumOnCtg()
+                                                -
+                                              dupComplications.getDupSeqRepeatNumOnRef();
+                upstreamBreakpointRefPos = leftReferenceInterval.getEnd()
+                                            - homologyLen
+                                            - (expansionUnitDiff) * dupComplications.getDupSeqRepeatUnitRefSpan().size();
+                downstreamBreakpointRefPos = rightReferenceInterval.getStart() - 1;
+
+                Cigar cigar = simpleChimera.regionWithLowerCoordOnContig.cigarAlong5to3DirectionOfContig;
+                int hardClipOffset = cigar.getFirstCigarElement().getOperator().equals(CigarOperator.H) ? cigar.getFirstCigarElement().getLength() : 0;
+                int distOnRead = SvCigarUtils
+                        .computeAssociatedDistOnRead(cigar,
+                                distances.firstAlnCtgEnd - hardClipOffset,
+                                -distances.distBetweenAlignRegionsOnRef,
+                                true);
+                final int zeroBasedStart = distances.firstAlnCtgEnd - distOnRead;
+
+                cigar = simpleChimera.regionWithHigherCoordOnContig.cigarAlong5to3DirectionOfContig;
+                hardClipOffset = cigar.getFirstCigarElement().getOperator().equals(CigarOperator.H) ? cigar.getFirstCigarElement().getLength() : 0;
+                distOnRead = SvCigarUtils
+                        .computeAssociatedDistOnRead(cigar,
+                                distances.secondAlnCtgStart - hardClipOffset,
+                                -distances.distBetweenAlignRegionsOnRef,
+                                false);
+                final int zeroBasedEnd = distances.secondAlnCtgStart + distOnRead - 1;
+
+                altHaplotypeSequence = Arrays.copyOfRange(contigSequence, zeroBasedStart, zeroBasedEnd);
+                if (!simpleChimera.isForwardStrandRepresentation) {
+                    SequenceUtil.reverseComplement(altHaplotypeSequence);
+                }
+            }
         }
     }
 
@@ -321,7 +388,7 @@ abstract class BreakpointsInference {
 
         @Override
         void resolveComplications(final ChimericAlignment simpleChimera, final byte[] contigSequence) {
-            complications = new BreakpointComplications.IntraChrStrandSwitchBreakpointComplications(simpleChimera, contigSequence);
+            complications = new IntraChrStrandSwitchBreakpointComplications(simpleChimera, contigSequence);
         }
 
         IntraChrStrandSwitchBreakpointInference(final ChimericAlignment simpleChimera,
@@ -333,8 +400,8 @@ abstract class BreakpointsInference {
                     = downstreamBreakpointRefContig
                     = simpleChimera.regionWithLowerCoordOnContig.referenceSpan.getContig();
 
-            final BreakpointComplications.IntraChrStrandSwitchBreakpointComplications moreSpecificComplications =
-                    (BreakpointComplications.IntraChrStrandSwitchBreakpointComplications) complications;
+            final IntraChrStrandSwitchBreakpointComplications moreSpecificComplications =
+                    (IntraChrStrandSwitchBreakpointComplications) complications;
 
             if (simpleChimera.isLikelyInvertedDuplication()){
 
@@ -440,7 +507,7 @@ abstract class BreakpointsInference {
         @Override
         void resolveComplications(final ChimericAlignment simpleChimera,
                                   final byte[] contigSequence) {
-            complications = new BreakpointComplications.IntraChrRefOrderSwapBreakpointComplications(simpleChimera, contigSequence);
+            complications = new IntraChrRefOrderSwapBreakpointComplications(simpleChimera, contigSequence);
         }
 
         IntraChrRefOrderSwapBreakpointsInference(final ChimericAlignment simpleChimera,
@@ -448,8 +515,8 @@ abstract class BreakpointsInference {
                                                  final SAMSequenceDictionary referenceDictionary) {
             super(simpleChimera, contigSequence, referenceDictionary);
 
-            final BreakpointComplications.IntraChrRefOrderSwapBreakpointComplications moreSpecificComplications =
-                    (BreakpointComplications.IntraChrRefOrderSwapBreakpointComplications) complications;
+            final IntraChrRefOrderSwapBreakpointComplications moreSpecificComplications =
+                    (IntraChrRefOrderSwapBreakpointComplications) complications;
 
             final int homologyLen = moreSpecificComplications.getHomologyForwardStrandRep().length();
             final AlignmentInterval one = simpleChimera.regionWithLowerCoordOnContig,
@@ -484,7 +551,7 @@ abstract class BreakpointsInference {
         @Override
         void resolveComplications(final ChimericAlignment simpleChimera,
                                   final byte[] contigSequence) {
-            complications = new BreakpointComplications.InterChromosomeBreakpointComplications(simpleChimera, contigSequence);
+            complications = new InterChromosomeBreakpointComplications(simpleChimera, contigSequence);
         }
 
         InterChromosomeBreakpointsInference(final ChimericAlignment simpleChimera,
@@ -492,8 +559,8 @@ abstract class BreakpointsInference {
                                             final SAMSequenceDictionary referenceDictionary) {
             super(simpleChimera, contigSequence, referenceDictionary);
 
-            final BreakpointComplications.InterChromosomeBreakpointComplications moreSpecificComplications =
-                    (BreakpointComplications.InterChromosomeBreakpointComplications) complications;
+            final InterChromosomeBreakpointComplications moreSpecificComplications =
+                    (InterChromosomeBreakpointComplications) complications;
 
             determineRefContigs(simpleChimera, referenceDictionary);
 
@@ -509,7 +576,7 @@ abstract class BreakpointsInference {
         }
 
         private void extractRefPositions(final ChimericAlignment ca,
-                                         final BreakpointComplications.InterChromosomeBreakpointComplications complication,
+                                         final InterChromosomeBreakpointComplications complication,
                                          final SAMSequenceDictionary referenceDictionary) {
             final int homologyLen = complication.getHomologyForwardStrandRep().length();
             final boolean firstInPartner = isFirstInPartner(ca, referenceDictionary);

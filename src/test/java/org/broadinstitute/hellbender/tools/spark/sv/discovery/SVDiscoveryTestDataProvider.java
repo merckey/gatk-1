@@ -545,7 +545,7 @@ public final class SVDiscoveryTestDataProvider {
      * "TGCCAGGTTACATGGCAAAGAGGGTAGATATGGGGAGCTGTGAAGAATGGAGCCAGTAATTAAATTCACTGAAGTCTCCACAGGAGGGCAAGGTGGACAATCTGTCCCATAGGAGGGGGATTCATGAGGGGAGCTGTGAAGAATGGAGCCAGTAATTAAATTCACTGAAGTCTCCACAGGAGGGCAAGGTGGACAATCTGTCCCATAGGAGGGGGATTCAGGAGGGCAGCTGTGGATGGTGCAAATGCCATTTATGCTCCTCTCCACCCATATCC"
      * with two alignment records chr18:312579-312718 140M135S
      *                            chr18:312610-312757 127S148M
-     * for a tandem repeat expansion event from 1 copy to 2 copies with also a pseudo-homologyForwardStrandRep
+     * for a tandem repeat expansion event from 1 copy to 2 copies with also a pseudo-homology
 
      * Return a list of eight entries for positive and reverse strand representations for:
      * 1. expansion from 1 unit to 2 units with pseudo-homology
@@ -569,69 +569,84 @@ public final class SVDiscoveryTestDataProvider {
         final byte[] contigSeqForComplexExpansionWithPseudoHomology = String.format("%s%s%s%s%s", leftRefFlank, firstRepeat, secondRepeat, pseudoHomology, rightRefFlank).getBytes();
         AlignmentInterval region1 = new AlignmentInterval(new SimpleInterval("20", 312579, 312718), 1 ,140, TextCigarCodec.decode("140M135S"), true, 60, 0, 100, ContigAlignmentsModifier.AlnModType.NONE);
         AlignmentInterval region2 = new AlignmentInterval(new SimpleInterval("20", 312610, 312757), 128 ,275, TextCigarCodec.decode("127S148M"), true, 60, 0, 100, ContigAlignmentsModifier.AlnModType.NONE);
-        NovelAdjacencyAndInferredAltHaptype breakpoints = new NovelAdjacencyAndInferredAltHaptype(new ChimericAlignment(region1, region2, Collections.emptyList(), "asm000001:tig00001", seqDict), contigSeqForComplexExpansionWithPseudoHomology, seqDict);
+        NovelAdjacencyAndInferredAltHaptype breakpoints =
+                new NovelAdjacencyAndInferredAltHaptype(
+                        new ChimericAlignment(region1, region2, Collections.emptyList(), "asm000001:tig00001", seqDict),
+                        contigSeqForComplexExpansionWithPseudoHomology, seqDict);
         result.add(new Tuple4<>(region1, region2, breakpoints, "asm000001:tig00001"));
 
-        final byte[] fakeRefSeqForComplexExpansionWithPseudoHomology_reverseStrand = Arrays.copyOf(fakeRefSeqForComplexExpansionWithPseudoHomology, fakeRefSeqForComplexExpansionWithPseudoHomology.length);
         final byte[] contigSeqForComplexExpansionWithPseudoHomology_reverseStrand = Arrays.copyOf(contigSeqForComplexExpansionWithPseudoHomology, contigSeqForComplexExpansionWithPseudoHomology.length);
-        SequenceUtil.reverseComplement(fakeRefSeqForComplexExpansionWithPseudoHomology_reverseStrand);
         SequenceUtil.reverseComplement(contigSeqForComplexExpansionWithPseudoHomology_reverseStrand);
-
         region1 = new AlignmentInterval(new SimpleInterval("20", 312610, 312757), 1 ,148, TextCigarCodec.decode("148M127S"), false, 60, 0, 100, ContigAlignmentsModifier.AlnModType.NONE);
         region2 = new AlignmentInterval(new SimpleInterval("20", 312579, 312718), 136 ,275, TextCigarCodec.decode("135S140M"), false, 60, 0, 100, ContigAlignmentsModifier.AlnModType.NONE);
-        breakpoints = new NovelAdjacencyAndInferredAltHaptype(new ChimericAlignment(region1, region2, Collections.emptyList(), "asm000001:tig00001", seqDict), contigSeqForComplexExpansionWithPseudoHomology_reverseStrand, seqDict);
+        breakpoints = new NovelAdjacencyAndInferredAltHaptype(
+                new ChimericAlignment(region1, region2, Collections.emptyList(),
+                        "asm000001:tig00001", seqDict),
+                contigSeqForComplexExpansionWithPseudoHomology_reverseStrand, seqDict);
         result.add(new Tuple4<>(region1, region2, breakpoints, "asm000001:tig00001"));
 
         // second test: contraction from 2 units to 1 unit with pseudo-homology
-        final byte[] fakeRefSeqForComplexContractionWithPseudoHomology = contigSeqForComplexExpansionWithPseudoHomology;
         final byte[] contigSeqForComplexContractionWithPseudoHomology = fakeRefSeqForComplexExpansionWithPseudoHomology;
         region1 = new AlignmentInterval(new SimpleInterval("20", 312579, 312718), 1, 140, TextCigarCodec.decode("140M39S"), true, 60, 0, 100, ContigAlignmentsModifier.AlnModType.NONE);
         region2 = new AlignmentInterval(new SimpleInterval("20", 312706, 312853), 32, 179, TextCigarCodec.decode("31S148M"), true, 60, 0, 100, ContigAlignmentsModifier.AlnModType.NONE);
-        breakpoints = new NovelAdjacencyAndInferredAltHaptype(new ChimericAlignment(region1, region2, Collections.emptyList(), "asm000001:tig00001", seqDict), contigSeqForComplexContractionWithPseudoHomology, seqDict);
+        breakpoints =
+                new NovelAdjacencyAndInferredAltHaptype(
+                        new ChimericAlignment(region1, region2, Collections.emptyList(),
+                                "asm000001:tig00001", seqDict),
+                        contigSeqForComplexContractionWithPseudoHomology, seqDict);
         result.add(new Tuple4<>(region1, region2, breakpoints, "asm000001:tig00001"));
 
-        final byte[] fakeRefSeqForComplexContractionWithPseudoHomology_reverseStrand = Arrays.copyOf(fakeRefSeqForComplexContractionWithPseudoHomology, fakeRefSeqForComplexContractionWithPseudoHomology.length);
         final byte[] contigSeqForComplexContractionWithPseudoHomology_reverseStrand = Arrays.copyOf(contigSeqForComplexContractionWithPseudoHomology, contigSeqForComplexContractionWithPseudoHomology.length);
-        SequenceUtil.reverseComplement(fakeRefSeqForComplexContractionWithPseudoHomology_reverseStrand);
         SequenceUtil.reverseComplement(contigSeqForComplexContractionWithPseudoHomology_reverseStrand);
         region1 = new AlignmentInterval(new SimpleInterval("20", 312706, 312853), 1, 148, TextCigarCodec.decode("148M31S"), false, 60, 0, 100, ContigAlignmentsModifier.AlnModType.NONE);
         region2 = new AlignmentInterval(new SimpleInterval("20", 312579, 312718), 40, 179, TextCigarCodec.decode("39S140M"), false, 60, 0, 100, ContigAlignmentsModifier.AlnModType.NONE);
-        breakpoints = new NovelAdjacencyAndInferredAltHaptype(new ChimericAlignment(region1, region2, Collections.emptyList(), "asm000001:tig00001", seqDict), contigSeqForComplexContractionWithPseudoHomology_reverseStrand, seqDict);
+        breakpoints = new NovelAdjacencyAndInferredAltHaptype(
+                new ChimericAlignment(region1, region2, Collections.emptyList(),
+                        "asm000001:tig00001", seqDict),
+                contigSeqForComplexContractionWithPseudoHomology_reverseStrand, seqDict);
         result.add(new Tuple4<>(region1, region2, breakpoints, "asm000001:tig00001"));
 
         // third test: contraction from 3 units to 2 units without pseudo-homology
         final byte[] fakeRefSeqForComplexContractionNoPseudoHomology = String.format("%s%s%s%s%s", leftRefFlank, firstRepeat, secondRepeat, firstRepeat, rightRefFlank).getBytes();
         final byte[] contigSeqForComplexContractionNoPseudoHomology = String.format("%s%s%s%s", leftRefFlank, firstRepeat, secondRepeat, rightRefFlank).getBytes();
-
         region1 = new AlignmentInterval(new SimpleInterval("20", 312579, 312801), 1, 223, TextCigarCodec.decode("223M39S"), true, 60, 0, 100, ContigAlignmentsModifier.AlnModType.NONE);
         region2 = new AlignmentInterval(new SimpleInterval("20", 312706, 312936), 32, 262, TextCigarCodec.decode("31S231M"), true, 60, 0, 100, ContigAlignmentsModifier.AlnModType.NONE);
-        breakpoints = new NovelAdjacencyAndInferredAltHaptype(new ChimericAlignment(region1, region2, Collections.emptyList(), "asm000001:tig00001", seqDict), contigSeqForComplexContractionNoPseudoHomology, seqDict);
+        breakpoints =
+                new NovelAdjacencyAndInferredAltHaptype(
+                        new ChimericAlignment(region1, region2, Collections.emptyList(),
+                                "asm000001:tig00001", seqDict),
+                        contigSeqForComplexContractionNoPseudoHomology, seqDict);
         result.add(new Tuple4<>(region1, region2, breakpoints, "asm000001:tig00001"));
 
-        final byte[] fakeRefSeqForComplexContractionNoPseudoHomology_reverseStrand = Arrays.copyOf(fakeRefSeqForComplexContractionNoPseudoHomology, fakeRefSeqForComplexContractionNoPseudoHomology.length);
         final byte[] contigSeqForComplexContractionNoPseudoHomology_reverseStrand = Arrays.copyOf(contigSeqForComplexContractionNoPseudoHomology, contigSeqForComplexContractionNoPseudoHomology.length);
-        SequenceUtil.reverseComplement(fakeRefSeqForComplexContractionNoPseudoHomology_reverseStrand);
         SequenceUtil.reverseComplement(contigSeqForComplexContractionNoPseudoHomology_reverseStrand);
         region1 = new AlignmentInterval(new SimpleInterval("20", 312706, 312936), 1, 231, TextCigarCodec.decode("231M31S"), false, 60, 0, 100, ContigAlignmentsModifier.AlnModType.NONE);
         region2 = new AlignmentInterval(new SimpleInterval("20", 312579, 312801), 40, 262, TextCigarCodec.decode("39S223M"), false, 60, 0, 100, ContigAlignmentsModifier.AlnModType.NONE);
-        breakpoints = new NovelAdjacencyAndInferredAltHaptype(new ChimericAlignment(region1, region2, Collections.emptyList(), "asm000001:tig00001", seqDict), contigSeqForComplexContractionNoPseudoHomology_reverseStrand, seqDict);
+        breakpoints = new NovelAdjacencyAndInferredAltHaptype(
+                new ChimericAlignment(region1, region2, Collections.emptyList(),
+                        "asm000001:tig00001", seqDict),
+                contigSeqForComplexContractionNoPseudoHomology_reverseStrand, seqDict);
         result.add(new Tuple4<>(region1, region2, breakpoints, "asm000001:tig00001"));
 
         // fourth test: expansion from 2 units to 3 units without pseudo-homology
-        final byte[] fakeRefSeqForComplexExpansionNoPseudoHomology = contigSeqForComplexContractionNoPseudoHomology;
         final byte[] contigSeqForComplexExpansionNoPseudoHomology = fakeRefSeqForComplexContractionNoPseudoHomology;
         region1 = new AlignmentInterval(new SimpleInterval("20", 312579, 312801), 1, 223, TextCigarCodec.decode("223M135S"), true, 60, 0, 100, ContigAlignmentsModifier.AlnModType.NONE);
         region2 = new AlignmentInterval(new SimpleInterval("20", 312610, 312840), 128, 358, TextCigarCodec.decode("127S231M"), true, 60, 0, 100, ContigAlignmentsModifier.AlnModType.NONE);
-        breakpoints = new NovelAdjacencyAndInferredAltHaptype(new ChimericAlignment(region1, region2, Collections.emptyList(), "asm000001:tig00001", seqDict), contigSeqForComplexExpansionNoPseudoHomology, seqDict);
+        breakpoints =
+                new NovelAdjacencyAndInferredAltHaptype(
+                        new ChimericAlignment(region1, region2, Collections.emptyList(),
+                                "asm000001:tig00001", seqDict),
+                        contigSeqForComplexExpansionNoPseudoHomology, seqDict);
         result.add(new Tuple4<>(region1, region2, breakpoints, "asm000001:tig00001"));
 
-        final byte[] fakeRefSeqForComplexExpansionNoPseudoHomology_reverseStrand = Arrays.copyOf(fakeRefSeqForComplexExpansionNoPseudoHomology, fakeRefSeqForComplexExpansionNoPseudoHomology.length);
         final byte[] contigSeqForComplexExpansionNoPseudoHomology_reverseStrand = Arrays.copyOf(contigSeqForComplexExpansionNoPseudoHomology, contigSeqForComplexExpansionNoPseudoHomology.length);
-        SequenceUtil.reverseComplement(fakeRefSeqForComplexExpansionNoPseudoHomology_reverseStrand);
         SequenceUtil.reverseComplement(contigSeqForComplexExpansionNoPseudoHomology_reverseStrand);
         region1 = new AlignmentInterval(new SimpleInterval("20", 312610, 312840), 1, 231, TextCigarCodec.decode("231M127S"), false, 60, 0, 100, ContigAlignmentsModifier.AlnModType.NONE);
         region2 = new AlignmentInterval(new SimpleInterval("20", 312579, 312801), 136, 358, TextCigarCodec.decode("135S223M"), false, 60, 0, 100, ContigAlignmentsModifier.AlnModType.NONE);
-        breakpoints = new NovelAdjacencyAndInferredAltHaptype(new ChimericAlignment(region1, region2, Collections.emptyList(), "asm000001:tig00001", seqDict), contigSeqForComplexExpansionNoPseudoHomology_reverseStrand, seqDict);
+        breakpoints = new NovelAdjacencyAndInferredAltHaptype(
+                new ChimericAlignment(region1, region2, Collections.emptyList(),
+                        "asm000001:tig00001", seqDict),
+                contigSeqForComplexExpansionNoPseudoHomology_reverseStrand, seqDict);
         result.add(new Tuple4<>(region1, region2, breakpoints, "asm000001:tig00001"));
 
         return result;
