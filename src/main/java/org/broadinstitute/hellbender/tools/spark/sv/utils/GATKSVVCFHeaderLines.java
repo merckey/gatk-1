@@ -94,6 +94,7 @@ public final class GATKSVVCFHeaderLines {
                 "CIGARs of the repeated sequence on the locally-assembled contigs when aligned to " + GATKSVVCFConstants.DUP_REPEAT_UNIT_REF_SPAN + " (currently only available for repeats when " + GATKSVVCFConstants.DUP_ANNOTATIONS_IMPRECISE + " is false)"));
         addInfoLine(new VCFInfoHeaderLine(GATKSVVCFConstants.DUPLICATION_NUMBERS, VCFHeaderLineCount.R, VCFHeaderLineType.Integer, "Number of times the sequence is duplicated on reference and on the alternate alleles"));
         addInfoLine(new VCFInfoHeaderLine(GATKSVVCFConstants.DUP_ANNOTATIONS_IMPRECISE, 0, VCFHeaderLineType.Flag, "Whether the duplication annotations are from an experimental optimization procedure"));
+        addInfoLine(new VCFInfoHeaderLine(GATKSVVCFConstants.DUP_IMPRECISE_AFFECTED_RANGE, VCFHeaderLineCount.UNBOUNDED, VCFHeaderLineType.String, "Affected reference range for duplications annotated with the flag " + GATKSVVCFConstants.DUP_ANNOTATIONS_IMPRECISE));
 
         addInfoLine(new VCFInfoHeaderLine(GATKSVVCFConstants.READ_PAIR_SUPPORT, 1, VCFHeaderLineType.Integer, "Number of discordant read pairs supporting the variant"));
         addInfoLine(new VCFInfoHeaderLine(GATKSVVCFConstants.SPLIT_READ_SUPPORT, 1, VCFHeaderLineType.Integer, "Number of split read supplementary mappings supporting the variant"));

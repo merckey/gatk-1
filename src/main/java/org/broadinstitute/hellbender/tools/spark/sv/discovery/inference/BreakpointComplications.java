@@ -293,6 +293,7 @@ public abstract class BreakpointComplications {
         private List<Strand> dupSeqStrandOnCtg = null;
         private List<String> cigarStringsForDupSeqOnCtg = null;
         private boolean dupAnnotIsImprecise = false;
+        private SimpleInterval impreciseDupAffectedRefRange = null;
 
         public SimpleInterval getDupSeqRepeatUnitRefSpan() {
             return dupSeqRepeatUnitRefSpan;
@@ -313,6 +314,16 @@ public abstract class BreakpointComplications {
             return dupAnnotIsImprecise;
         }
 
+        /**
+         * @return may be null if the complication is not imprecise
+         */
+        public SimpleInterval getImpreciseDupAffectedRefRange() {
+            if (dupAnnotIsImprecise)
+                return impreciseDupAffectedRefRange;
+            else
+                return null;
+        }
+
         @Override
         public Map<String, Object> toVariantAttributes() {
             final Map<String, Object> parentAttributesToBeFilled = super.toVariantAttributes();
@@ -330,6 +341,7 @@ public abstract class BreakpointComplications {
             }
             if ( isDupAnnotImprecise() ) {
                 parentAttributesToBeFilled.put(GATKSVVCFConstants.DUP_ANNOTATIONS_IMPRECISE, "");
+                parentAttributesToBeFilled.put(GATKSVVCFConstants.DUP_IMPRECISE_AFFECTED_RANGE, impreciseDupAffectedRefRange.toString());
             }
 
             return parentAttributesToBeFilled;
@@ -351,7 +363,7 @@ public abstract class BreakpointComplications {
                     dupSeqStrandOnRef == null ? "" : dupSeqStrandOnRef.stream().map(Strand::toString).collect(SVUtils.arrayListCollector(dupSeqStrandOnRef.size())).toString(),
                     dupSeqStrandOnCtg == null ? "" : dupSeqStrandOnCtg.stream().map(Strand::toString).collect(SVUtils.arrayListCollector(dupSeqStrandOnCtg.size())).toString(),
                     cigarStringsForDupSeqOnCtg == null ? "" : cigarStringsForDupSeqOnCtg,
-                    isDupAnnotImprecise() ? "true" : "false");
+                    isDupAnnotImprecise() ? "imprecise:" + impreciseDupAffectedRefRange.toString() : "precise");
             return toPrint;
         }
 
@@ -521,6 +533,8 @@ public abstract class BreakpointComplications {
             dupSeqStrandOnRef             = new ArrayList<>(Collections.nCopies(dupSeqRepeatNumOnRef, Strand.POSITIVE));
             dupSeqStrandOnCtg             = new ArrayList<>(Collections.nCopies(dupSeqRepeatNumOnCtg, Strand.POSITIVE));
             dupAnnotIsImprecise = true;
+            impreciseDupAffectedRefRange = new SimpleInterval(dupSeqRepeatUnitRefSpan.getContig(),
+                    distances.rightAlnRefStart, distances.leftAlnRefEnd);
         }
 
         // TODO: 03/03/17 this complicated tandem duplication annotation is not exactly reproducible in the following sense:

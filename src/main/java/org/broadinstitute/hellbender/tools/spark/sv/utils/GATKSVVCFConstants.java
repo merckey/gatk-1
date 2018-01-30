@@ -50,6 +50,7 @@ public final class GATKSVVCFConstants {
     public static final String DUP_SEQ_CIGARS = "DUP_SEQ_CIGARS";
     public static final String DUPLICATION_NUMBERS = "DUP_NUM";
     public static final String DUP_ANNOTATIONS_IMPRECISE = "DUP_ANNOTATIONS_IMPRECISE";
+    public static final String DUP_IMPRECISE_AFFECTED_RANGE = "DUP_IMPRECISE_AFFECTED_RANGE";
 
     public static final String DUP_TAN_CONTRACTION_STRING = "CONTRACTION";
     public static final String DUP_TAN_EXPANSION_STRING = "EXPANSION";
@@ -83,6 +84,6 @@ public final class GATKSVVCFConstants {
                     "CTG_NAMES", "TOTAL_MAPPINGS", "MAPPING_QUALITIES", "HQ_MAPPINGS", "ALIGN_LENGTHS", "MAX_ALIGN_LENGTH",
                     "SEQ_ALT_HAPLOTYPE", "INSSEQ", "INSSEQ_MAP", "HOMSEQ", "HOMLEN", "DUP_REPEAT_UNIT_REF_SPAN",
                     "DUP_SEQ_CIGARS", "DUP_NUM", "DUP_ANNOTATIONS_IMPRECISE", "CONTRACTION", "EXPANSION", "DUP_ORIENTATIONS",
-                    "INV33", "INV55", "EXTERNAL_CNV_CALLS")
+                    "INV33", "INV55", "EXTERNAL_CNV_CALLS", "DUP_IMPRECISE_AFFECTED_RANGE")
                     .sorted().collect(Collectors.toList());
 }
