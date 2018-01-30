@@ -520,17 +520,20 @@ abstract class BreakpointsInference {
 
             final int homologyLen = moreSpecificComplications.getHomologyForwardStrandRep().length();
             final AlignmentInterval one = simpleChimera.regionWithLowerCoordOnContig,
-                                    two = simpleChimera.regionWithHigherCoordOnContig;
-            final SimpleInterval leftReferenceInterval, rightReferenceInterval;
+                    two = simpleChimera.regionWithHigherCoordOnContig;
+            final SimpleInterval leftRefSpan, rightRefSpan;
             if (simpleChimera.isForwardStrandRepresentation) {
-                leftReferenceInterval  = one.referenceSpan;
-                rightReferenceInterval = two.referenceSpan;
+                leftRefSpan  = two.referenceSpan;
+                rightRefSpan = one.referenceSpan;
             } else {
-                leftReferenceInterval  = two.referenceSpan;
-                rightReferenceInterval = one.referenceSpan;
+                leftRefSpan  = one.referenceSpan;
+                rightRefSpan = two.referenceSpan;
             }
-            upstreamBreakpointRefPos = rightReferenceInterval.getStart();
-            downstreamBreakpointRefPos = leftReferenceInterval.getEnd() - homologyLen;
+            upstreamBreakpointRefContig
+                    = downstreamBreakpointRefContig
+                    = simpleChimera.regionWithLowerCoordOnContig.referenceSpan.getContig();
+            upstreamBreakpointRefPos = leftRefSpan.getStart();
+            downstreamBreakpointRefPos = rightRefSpan.getEnd() - homologyLen;
 
             if( complications.insertedSequenceForwardStrandRep.isEmpty() ) {
                 altHaplotypeSequence = new byte[0];

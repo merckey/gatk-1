@@ -176,10 +176,7 @@ public abstract class BreakpointComplications {
         if (current.endInAssembledContig >= next.startInAssembledContig) {
             final byte[] homologyBytes = Arrays.copyOfRange(contigSequence,
                     next.startInAssembledContig-1, current.endInAssembledContig);
-            if (current.referenceSpan.getStart() > next.referenceSpan.getStart()) {
-                SequenceUtil.reverseComplement(homologyBytes, 0, homologyBytes.length);
-            }
-            return new String(homologyBytes);
+            return new String(reverseComplementIfNecessary(homologyBytes, current, next));
         } else {
             return "";
         }
@@ -195,13 +192,22 @@ public abstract class BreakpointComplications {
         if (current.endInAssembledContig < next.startInAssembledContig - 1) {
             final byte[] insertedSequenceBytes = Arrays.copyOfRange(contigSequence,
                     current.endInAssembledContig, next.startInAssembledContig - 1);
-            if (current.referenceSpan.getStart() > next.referenceSpan.getStart()) {
-                SequenceUtil.reverseComplement(insertedSequenceBytes, 0, insertedSequenceBytes.length);
-            }
-            return new String(insertedSequenceBytes);
+            return new String(reverseComplementIfNecessary(insertedSequenceBytes, current, next));
         } else {
             return "";
         }
+    }
+
+    private static byte[] reverseComplementIfNecessary(final byte[] seq,
+                                                       final AlignmentInterval current, final AlignmentInterval next) {
+        if ( current.forwardStrand == next.forwardStrand ) { // reference order switch
+            if (!current.forwardStrand) {
+                SequenceUtil.reverseComplement(seq, 0, seq.length);
+            }
+        } else if (current.referenceSpan.getStart() > next.referenceSpan.getStart()) {
+            SequenceUtil.reverseComplement(seq, 0, seq.length);
+        }
+        return seq;
     }
 
     //==================================================================================================================

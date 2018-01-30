@@ -441,4 +441,25 @@ public class NovelAdjacencyAndInferredAltHaptypeUnitTest extends GATKBaseTest {
         Assert.assertEquals(breakpointsRev, breakpoints); // different representation, should lead to same result
 
     }
+
+    @Test(groups = "sv")
+    public void testRefOrderSwitch() {
+        AlignmentInterval region1 = new AlignmentInterval(
+                // assigned from chr18 to chr21 to use the dict
+                new SimpleInterval("chr21", 39477098, 39477363),
+                1 ,268,
+                TextCigarCodec.decode("236M2I30M108S"), true, 32, 25, 133, ContigAlignmentsModifier.AlnModType.NONE);
+        AlignmentInterval region2 = new AlignmentInterval(
+                new SimpleInterval("chr21", 39192594, 39192692),
+                252 ,350,
+                TextCigarCodec.decode("251S99M26S"), true, 32, 1, 94, ContigAlignmentsModifier.AlnModType.NONE);
+        ChimericAlignment simpleChimera = new ChimericAlignment(region1, region2, Collections.emptyList(), "testContig", SVDiscoveryTestDataProvider.b38_seqDict);
+        NovelAdjacencyAndInferredAltHaptype breakpoints = new NovelAdjacencyAndInferredAltHaptype(simpleChimera,
+                "TTCCTTAAAATGCAGGTGAATACAAGAATTAGGTTTCAGGTTTTATATATATATTCTGATATATATATATAATATAACCTGAGATATATATATAAATATATATATTAATATATATTAATATATATAAATATATATATATTAATATATATTTATATATAAATATATATATATTAATATATATAAATATATATAAATATATATATATTAATATATATTAATATATAAATATATATATATTAATATATATTAATATATATAAATATATATATTAATATATATAAATATATATATAAATATATATAAATATATAAATATATATATAAATATATATAAATATATATAAATATATATACACACATACATACACATATACATT".getBytes(),
+                SVDiscoveryTestDataProvider.b38_seqDict);
+        Assert.assertEquals(breakpoints.getLeftJustifiedLeftRefLoc(), new SimpleInterval("chr21", 39192594, 39192594));
+        Assert.assertEquals(breakpoints.getLeftJustifiedRightRefLoc(), new SimpleInterval("chr21", 39477346, 39477346));
+        Assert.assertEquals(breakpoints.getComplication().getHomologyForwardStrandRep(), "ATATATAAATATATATA");
+        Assert.assertTrue(breakpoints.getComplication().getInsertedSequenceForwardStrandRep().isEmpty());
+    }
 }
