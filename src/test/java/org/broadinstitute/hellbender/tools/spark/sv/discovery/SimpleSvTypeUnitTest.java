@@ -35,7 +35,7 @@ public class SimpleSvTypeUnitTest extends GATKBaseTest {
                                final String expectedFirstFieldInIdString) throws IOException {
 
         final SvType SvType = SimpleNovelAdjacencyInterpreter.inferSimpleTypeFromNovelAdjacency(novelAdjacencyAndInferredAltHaptype);
-        final List<Allele> producedAlleles = AnnotatedVariantProducer.produceAlleles(novelAdjacencyAndInferredAltHaptype.getLeftJustifiedLeftRefLoc(), SVDiscoveryTestDataProvider.reference, SvType);
+        final List<Allele> producedAlleles = AnnotatedVariantProducer.produceAlleles(novelAdjacencyAndInferredAltHaptype.getLeftJustifiedLeftRefLoc(), SVDiscoveryTestDataProvider.b37_reference, SvType);
 
         Assert.assertEquals(producedAlleles.size(), 2);
         Assert.assertTrue(producedAlleles.get(0).isReference() && producedAlleles.get(1).isNonReference());
@@ -60,53 +60,53 @@ public class SimpleSvTypeUnitTest extends GATKBaseTest {
     public void testAltAlleleSvLenAndIdProductions() throws IOException {
 
         // inversion
-        worker(SVDiscoveryTestDataProvider.forSimpleInversionFromLongCtg1WithStrangeLeftBreakpoint._3(), GATKSVVCFConstants.SYMB_ALT_ALLELE_INV, 14644,
+        worker(SVDiscoveryTestDataProvider.forSimpleInversionFromLongCtg1WithStrangeLeftBreakpoint.biPathBubble, GATKSVVCFConstants.SYMB_ALT_ALLELE_INV, 14644,
                 GATKSVVCFConstants.INV33);
-        worker(SVDiscoveryTestDataProvider.forSimpleInversionWithHom_leftPlus._3(), GATKSVVCFConstants.SYMB_ALT_ALLELE_INV, 405,
+        worker(SVDiscoveryTestDataProvider.forSimpleInversionWithHom_leftPlus.biPathBubble, GATKSVVCFConstants.SYMB_ALT_ALLELE_INV, 405,
                 GATKSVVCFConstants.INV55);
 
         // simple deletion
-        worker(SVDiscoveryTestDataProvider.forSimpleDeletion_plus._3(), GATKSVVCFConstants.SYMB_ALT_ALLELE_DEL, -20,
+        worker(SVDiscoveryTestDataProvider.forSimpleDeletion_plus.biPathBubble, GATKSVVCFConstants.SYMB_ALT_ALLELE_DEL, -20,
                 SimpleSVType.TYPES.DEL.name());
 
         // simple insertion
-        worker(SVDiscoveryTestDataProvider.forSimpleInsertion_minus._3(), GATKSVVCFConstants.SYMB_ALT_ALLELE_INS, 50,
+        worker(SVDiscoveryTestDataProvider.forSimpleInsertion_minus.biPathBubble, GATKSVVCFConstants.SYMB_ALT_ALLELE_INS, 50,
                 SimpleSVType.TYPES.INS.name());
 
         // long range substitution (i.e. scarred deletion)
-        worker(SVDiscoveryTestDataProvider.forLongRangeSubstitution_plus._3(), GATKSVVCFConstants.SYMB_ALT_ALLELE_DEL, -20,
+        worker(SVDiscoveryTestDataProvider.forLongRangeSubstitution_plus.biPathBubble, GATKSVVCFConstants.SYMB_ALT_ALLELE_DEL, -20,
                 SimpleSVType.TYPES.DEL.name());
 
         // simple deletion with homology
-        worker(SVDiscoveryTestDataProvider.forDeletionWithHomology_minus._3(), GATKSVVCFConstants.SYMB_ALT_ALLELE_DEL, -38,
+        worker(SVDiscoveryTestDataProvider.forDeletionWithHomology_minus.biPathBubble, GATKSVVCFConstants.SYMB_ALT_ALLELE_DEL, -38,
                 SimpleSVType.TYPES.DEL.name());
 
         // simple tandem dup contraction from 2 units to 1 unit
-        worker(SVDiscoveryTestDataProvider.forSimpleTanDupContraction_plus._3(), GATKSVVCFConstants.SYMB_ALT_ALLELE_DEL, -10,
+        worker(SVDiscoveryTestDataProvider.forSimpleTanDupContraction_plus.biPathBubble, GATKSVVCFConstants.SYMB_ALT_ALLELE_DEL, -10,
                 GATKSVVCFConstants.DUP_TAN_CONTRACTION_INTERNAL_ID_START_STRING);
 
         // simple tandem dup expansion from 1 unit to 2 units
-        worker(SVDiscoveryTestDataProvider.forSimpleTanDupExpansion_minus._3(), GATKSVVCFConstants.SYMB_ALT_ALLELE_DUP, 10,
+        worker(SVDiscoveryTestDataProvider.forSimpleTanDupExpansion_minus.biPathBubble, GATKSVVCFConstants.SYMB_ALT_ALLELE_DUP, 10,
                 GATKSVVCFConstants.DUP_TAN_EXPANSION_INTERNAL_ID_START_STRING);
 
         // simple tandem dup expansion from 1 unit to 2 units and novel insertion
-        worker(SVDiscoveryTestDataProvider.forSimpleTanDupExpansionWithNovelIns_plus._3(), GATKSVVCFConstants.SYMB_ALT_ALLELE_DUP, 99,
+        worker(SVDiscoveryTestDataProvider.forSimpleTanDupExpansionWithNovelIns_plus.biPathBubble, GATKSVVCFConstants.SYMB_ALT_ALLELE_DUP, 99,
                 GATKSVVCFConstants.DUP_TAN_EXPANSION_INTERNAL_ID_START_STRING);
 
         // tandem dup expansion from 1 unit to 2 units with pseudo-homology
-        worker(SVDiscoveryTestDataProvider.forComplexTanDup_1to2_pseudoHom_minus._3(), GATKSVVCFConstants.SYMB_ALT_ALLELE_DUP, 96,
+        worker(SVDiscoveryTestDataProvider.forComplexTanDup_1to2_pseudoHom_minus.biPathBubble, GATKSVVCFConstants.SYMB_ALT_ALLELE_DUP, 96,
                 GATKSVVCFConstants.DUP_TAN_EXPANSION_INTERNAL_ID_START_STRING);
 
         // tandem dup contraction from 2 units to 1 unit with pseudo-homology
-        worker(SVDiscoveryTestDataProvider.forComplexTanDup_2to1_pseudoHom_plus._3(), GATKSVVCFConstants.SYMB_ALT_ALLELE_DEL, -96,
+        worker(SVDiscoveryTestDataProvider.forComplexTanDup_2to1_pseudoHom_plus.biPathBubble, GATKSVVCFConstants.SYMB_ALT_ALLELE_DEL, -96,
                 GATKSVVCFConstants.DUP_TAN_CONTRACTION_INTERNAL_ID_START_STRING);
 
         // tandem dup contraction from 3 units to 2 units
-        worker(SVDiscoveryTestDataProvider.forComplexTanDup_3to2_noPseudoHom_minus._3(), GATKSVVCFConstants.SYMB_ALT_ALLELE_DEL, -96,
+        worker(SVDiscoveryTestDataProvider.forComplexTanDup_3to2_noPseudoHom_minus.biPathBubble, GATKSVVCFConstants.SYMB_ALT_ALLELE_DEL, -96,
                 GATKSVVCFConstants.DUP_TAN_CONTRACTION_INTERNAL_ID_START_STRING);
 
         // tandem dup expansion from 2 units to 3 units
-        worker(SVDiscoveryTestDataProvider.forComplexTanDup_2to3_noPseudoHom_plus._3(), GATKSVVCFConstants.SYMB_ALT_ALLELE_DUP, 96,
+        worker(SVDiscoveryTestDataProvider.forComplexTanDup_2to3_noPseudoHom_plus.biPathBubble, GATKSVVCFConstants.SYMB_ALT_ALLELE_DUP, 96,
                 GATKSVVCFConstants.DUP_TAN_EXPANSION_INTERNAL_ID_START_STRING);
     }
 }
