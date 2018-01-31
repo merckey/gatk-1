@@ -428,8 +428,8 @@ abstract class BreakpointsInference {
                     upstreamBreakpointRefPos = leftReferenceInterval.getEnd() - homologyLen;
                     downstreamBreakpointRefPos = rightReferenceInterval.getEnd();
                 } else {
-                    upstreamBreakpointRefPos = leftReferenceInterval.getStart() - 1;
-                    downstreamBreakpointRefPos = rightReferenceInterval.getStart() + homologyLen - 1;
+                    upstreamBreakpointRefPos = leftReferenceInterval.getStart();
+                    downstreamBreakpointRefPos = rightReferenceInterval.getStart() + homologyLen;
                 }
             }
 
