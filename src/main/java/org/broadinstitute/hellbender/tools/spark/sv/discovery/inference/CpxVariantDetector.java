@@ -27,13 +27,13 @@ import org.broadinstitute.hellbender.utils.Utils;
 import scala.Tuple2;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.broadinstitute.hellbender.tools.spark.sv.StructuralVariationDiscoveryArgumentCollection.DiscoverVariantsFromContigsAlignmentsSparkArgumentCollection.CHIMERIC_ALIGNMENTS_HIGHMQ_THRESHOLD;
 import static org.broadinstitute.hellbender.tools.spark.sv.utils.GATKSVVCFConstants.*;
 
 /**
@@ -44,7 +44,8 @@ import static org.broadinstitute.hellbender.tools.spark.sv.utils.GATKSVVCFConsta
  * paint the full picture we could decide to emit all BND records,
  * but that could be dealt with later.
  */
-public final class CpxVariantDetector {
+public final class CpxVariantDetector implements Serializable {
+    private static final long serialVersionUID = 1L;
     private static final boolean DEBUG_OUTPUT = false; // for debugging, once the prototyping code is merged, this and its usage will be deleted
 
 
@@ -59,8 +60,17 @@ public final class CpxVariantDetector {
         final JavaRDD<AnnotatedContig> annotatedContigs =
                 assemblyContigs.map(tig -> new AnnotatedContig(tig, referenceSequenceDictionaryBroadcast.getValue()));
 
-        SVVCFWriter.writeVCF(annotatedContigs.map(tig -> tig.toVariantContext(referenceBroadcast.getValue())).collect(),
-                outputPath, referenceSequenceDictionaryBroadcast.getValue(), toolLogger);
+        final List<VariantContext> complexVariants =
+                annotatedContigs
+                        .groupBy(tig -> new EquivKey(tig.getAffectedRefRegion(), tig.getAltSeq(), tig.getSegmentsAndDescription()))
+                        .map(pair -> {
+                            final VariantContext rawVariantContext = pair._1.toVariantContext(referenceBroadcast.getValue());
+                            final VariantContextBuilder variantContextBuilder = new VariantContextBuilder(rawVariantContext);
+                            standardAttributes(pair._2).forEach(variantContextBuilder::attribute);
+                            return variantContextBuilder.make();
+                        })
+                        .collect();
+        SVVCFWriter.writeVCF(complexVariants, outputPath, referenceSequenceDictionaryBroadcast.getValue(), toolLogger);
 
         if (DEBUG_OUTPUT) {
             try {
@@ -197,28 +207,6 @@ public final class CpxVariantDetector {
             }
         }
 
-        public VariantContext toVariantContext(final ReferenceMultiSource reference) throws IOException {
-
-            final SimpleInterval affectedRefRegion = getAffectedRefRegion();
-            final CpxVariantType cpxVariant = new CpxVariantType(affectedRefRegion, typeSpecificExtraAttributes());
-            final SimpleInterval pos = new SimpleInterval(affectedRefRegion.getContig(), affectedRefRegion.getStart(), affectedRefRegion.getStart());
-
-            final VariantContextBuilder vcBuilder = new VariantContextBuilder()
-                    .chr(affectedRefRegion.getContig()).start(affectedRefRegion.getStart()).stop(affectedRefRegion.getEnd())
-                    .alleles(AnnotatedVariantProducer.produceAlleles(pos, reference, cpxVariant))
-                    .id(cpxVariant.getInternalVariantId())
-                    .attribute(SVTYPE, cpxVariant.toString())
-                    .attribute(VCFConstants.END_KEY, affectedRefRegion.getEnd())
-                    .attribute(SVLEN, cpxVariant.getSVLength())
-                    .attribute(SEQ_ALT_HAPLOTYPE, new String(altSeq));
-
-            cpxVariant.getTypeSpecificAttributes().forEach(vcBuilder::attribute);
-
-            // evidence used for producing the novel adjacency
-
-            return vcBuilder.make();
-        }
-
         private SimpleInterval getAffectedRefRegion() {
             final SimpleInterval pos, end;
             if (referenceSegmentsAndEventDescription.referenceSegments.isEmpty()) {
@@ -233,39 +221,6 @@ public final class CpxVariantDetector {
                 end = referenceSegmentsAndEventDescription.referenceSegments.get(referenceSegmentsAndEventDescription.referenceSegments.size() - 1);
             }
             return new SimpleInterval(pos.getContig(), pos.getStart(), end.getEnd());
-        }
-
-        private Map<String, String> typeSpecificExtraAttributes() {
-            final Map<String, String> attributes = new HashMap<>();
-            attributes.put(CPX_EVENT_ALT_ARRANGEMENTS,
-                            referenceSegmentsAndEventDescription.getAltArrangementString());
-            if ( ! referenceSegmentsAndEventDescription.referenceSegments.isEmpty() ) {
-                attributes.put(CPX_SV_REF_SEGMENTS,
-                        String.join(VCFConstants.INFO_FIELD_ARRAY_SEPARATOR,
-                                referenceSegmentsAndEventDescription.referenceSegments.stream()
-                                        .map(SimpleInterval::toString).collect(Collectors.toList())));
-            }
-            return attributes;
-        }
-
-        private Map<String, String> dummy() {
-
-            final Map<String, String> attributeMap = new HashMap<>();
-            attributeMap.put(GATKSVVCFConstants.TOTAL_MAPPINGS,    "1");
-            attributeMap.put(GATKSVVCFConstants.HQ_MAPPINGS,       tigWithInsMappings.getSourceContig().alignmentIntervals.stream().mapToInt(ai -> ai.mapQual).anyMatch( mq -> mq < CHIMERIC_ALIGNMENTS_HIGHMQ_THRESHOLD ) ? "0" : "1");
-            attributeMap.put(GATKSVVCFConstants.MAPPING_QUALITIES, tigWithInsMappings.getSourceContig().alignmentIntervals.stream().map(ai -> String.valueOf(ai.mapQual)).collect(Collectors.joining(VCFConstants.INFO_FIELD_ARRAY_SEPARATOR)));
-            attributeMap.put(GATKSVVCFConstants.ALIGN_LENGTHS,     tigWithInsMappings.getSourceContig().alignmentIntervals.stream().map(ai -> String.valueOf(ai.getSizeOnRead())).collect(Collectors.joining(VCFConstants.INFO_FIELD_ARRAY_SEPARATOR)));
-            attributeMap.put(GATKSVVCFConstants.MAX_ALIGN_LENGTH,  String.valueOf(tigWithInsMappings.getSourceContig().alignmentIntervals.stream().mapToInt(AlignmentInterval::getSizeOnRead).max().orElse(0)));
-            attributeMap.put(GATKSVVCFConstants.CONTIG_NAMES,      tigWithInsMappings.getSourceContig().contigName);
-
-            // TODO: 12/11/17 integrate these with those that survived the alignment filtering step?
-            // known insertion mappings from filtered out alignments
-            if ( !tigWithInsMappings.getInsertionMappings().isEmpty() ) {
-                attributeMap.put(INSERTED_SEQUENCE_MAPPINGS,
-                        String.join(VCFConstants.INFO_FIELD_ARRAY_SEPARATOR, tigWithInsMappings.getInsertionMappings()));
-            }
-
-            return attributeMap;
         }
 
         @Override
@@ -613,6 +568,24 @@ public final class CpxVariantDetector {
                 return new ReferenceSegmentsAndEventDescription(kryo, input);
             }
         }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            final ReferenceSegmentsAndEventDescription that = (ReferenceSegmentsAndEventDescription) o;
+
+            if (!referenceSegments.equals(that.referenceSegments)) return false;
+            return eventDescriptions.equals(that.eventDescriptions);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = referenceSegments.hashCode();
+            result = 31 * result + eventDescriptions.hashCode();
+            return result;
+        }
     }
 
     private static ReferenceSegmentsAndEventDescription segmentReferenceAndInterpret(final BasicInfo basicInfo,
@@ -879,6 +852,153 @@ public final class CpxVariantDetector {
 
     // =================================================================================================================
 
+    /**
+     * Two Cpx are equal if they are the same in
+     * <ul>
+     *     <li>
+     *         affected range
+     *     </li>
+     *     <li>
+     *         alt haplotype sequence
+     *     </li>
+     *     <li>
+     *         segments
+     *     </li>
+     *     <li>
+     *         alt arrangements
+     *     </li>
+     * </ul>
+     * @return
+     */
+    @DefaultSerializer(EquivKey.Serializer.class)
+    private static final class EquivKey {
+        private static final ReferenceSegmentsAndEventDescription.Serializer serializer =
+                new ReferenceSegmentsAndEventDescription.Serializer();
+
+        final SimpleInterval affectedRefRegion;
+        final byte[] altSeq;
+        final ReferenceSegmentsAndEventDescription segmentsAndAltArrange;
+
+        EquivKey(final SimpleInterval affectedRefRegion, final byte[] altSeq,
+                 final ReferenceSegmentsAndEventDescription segmentsAndAltArrange) {
+            this.affectedRefRegion = affectedRefRegion;
+            this.altSeq = altSeq;
+            this.segmentsAndAltArrange = segmentsAndAltArrange;
+        }
+
+        EquivKey(final Kryo kryo, final Input input) {
+            final String ctg = input.readString();
+            final int start = input.readInt();
+            final int end = input.readInt();
+            affectedRefRegion = new SimpleInterval(ctg, start, end);
+
+            altSeq = new byte[input.readInt()];
+            input.read(altSeq);
+
+            segmentsAndAltArrange = serializer.read(kryo, input, ReferenceSegmentsAndEventDescription.class);
+        }
+
+        void serialize(final Kryo kryo, final Output output) {
+            output.writeString(affectedRefRegion.getContig());
+            output.writeInt(affectedRefRegion.getStart());
+            output.writeInt(affectedRefRegion.getEnd());
+            output.writeInt(altSeq.length);
+            output.write(altSeq);
+            serializer.write(kryo, output, segmentsAndAltArrange);
+        }
+
+        public static final class Serializer extends com.esotericsoftware.kryo.Serializer<EquivKey> {
+            @Override
+            public void write(final Kryo kryo, final Output output, final EquivKey x) {
+                x.serialize(kryo, output);
+            }
+
+            @Override
+            public EquivKey read(final Kryo kryo, final Input input,
+                                 final Class<EquivKey> clazz) {
+                return new EquivKey(kryo, input);
+            }
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            final EquivKey equivKey = (EquivKey) o;
+
+            if (!affectedRefRegion.equals(equivKey.affectedRefRegion)) return false;
+            if (!Arrays.equals(altSeq, equivKey.altSeq)) return false;
+            return segmentsAndAltArrange.equals(equivKey.segmentsAndAltArrange);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = affectedRefRegion.hashCode();
+            result = 31 * result + Arrays.hashCode(altSeq);
+            result = 31 * result + segmentsAndAltArrange.hashCode();
+            return result;
+        }
+
+        private Map<String, String> typeSpecificExtraAttributes() {
+            final Map<String, String> attributes = new HashMap<>();
+            attributes.put(CPX_EVENT_ALT_ARRANGEMENTS,
+                    segmentsAndAltArrange.getAltArrangementString());
+            if ( ! segmentsAndAltArrange.referenceSegments.isEmpty() ) {
+                attributes.put(CPX_SV_REF_SEGMENTS,
+                        String.join(VCFConstants.INFO_FIELD_ARRAY_SEPARATOR,
+                                segmentsAndAltArrange.referenceSegments.stream()
+                                        .map(SimpleInterval::toString).collect(Collectors.toList())));
+            }
+            return attributes;
+        }
+
+        VariantContext toVariantContext(final ReferenceMultiSource reference) throws IOException {
+
+            final CpxVariantType cpxVariant = new CpxVariantType(affectedRefRegion, typeSpecificExtraAttributes());
+            final SimpleInterval pos = new SimpleInterval(affectedRefRegion.getContig(), affectedRefRegion.getStart(), affectedRefRegion.getStart());
+
+            final VariantContextBuilder vcBuilder = new VariantContextBuilder()
+                    .chr(affectedRefRegion.getContig()).start(affectedRefRegion.getStart()).stop(affectedRefRegion.getEnd())
+                    .alleles(AnnotatedVariantProducer.produceAlleles(pos, reference, cpxVariant))
+                    .id(cpxVariant.getInternalVariantId())
+                    .attribute(SVTYPE, cpxVariant.toString())
+                    .attribute(VCFConstants.END_KEY, affectedRefRegion.getEnd())
+                    .attribute(SVLEN, cpxVariant.getSVLength())
+                    .attribute(SEQ_ALT_HAPLOTYPE, new String(altSeq));
+
+            cpxVariant.getTypeSpecificAttributes().forEach(vcBuilder::attribute);
+            return vcBuilder.make();
+        }
+    }
+
+    // evidence used for producing the novel adjacency
+    private static Map<String, String> standardAttributes(final Iterable<AnnotatedContig> annotatedContigs) {
+        final List<AnnotatedContig> sorted = Utils.stream(annotatedContigs)
+                .sorted(Comparator.comparing(tig -> tig.tigWithInsMappings.getSourceContig().contigName))
+                .collect(Collectors.toList());
+
+        final Map<String, String> attributeMap = new HashMap<>();
+        attributeMap.put(GATKSVVCFConstants.TOTAL_MAPPINGS,    String.valueOf(sorted.size()));
+        attributeMap.put(GATKSVVCFConstants.CONTIG_NAMES,      sorted.stream().map(annotatedContig -> annotatedContig.tigWithInsMappings.getSourceContig().contigName).collect(Collectors.joining(VCFConstants.INFO_FIELD_ARRAY_SEPARATOR)));
+
+        // TODO: 2/1/18 question: show we introduce new annotations for them?
+//        attributeMap.put(GATKSVVCFConstants.HQ_MAPPINGS,       tigWithInsMappings.getSourceContig().alignmentIntervals.stream().mapToInt(ai -> ai.mapQual).anyMatch( mq -> mq < CHIMERIC_ALIGNMENTS_HIGHMQ_THRESHOLD ) ? "0" : "1");
+//        attributeMap.put(GATKSVVCFConstants.MAPPING_QUALITIES, tigWithInsMappings.getSourceContig().alignmentIntervals.stream().map(ai -> String.valueOf(ai.mapQual)).collect(Collectors.joining(VCFConstants.INFO_FIELD_ARRAY_SEPARATOR)));
+//        attributeMap.put(GATKSVVCFConstants.ALIGN_LENGTHS,     tigWithInsMappings.getSourceContig().alignmentIntervals.stream().map(ai -> String.valueOf(ai.getSizeOnRead())).collect(Collectors.joining(VCFConstants.INFO_FIELD_ARRAY_SEPARATOR)));
+//        attributeMap.put(GATKSVVCFConstants.MAX_ALIGN_LENGTH,  String.valueOf(tigWithInsMappings.getSourceContig().alignmentIntervals.stream().mapToInt(AlignmentInterval::getSizeOnRead).max().orElse(0)));
+
+        // TODO: 12/11/17 integrate these with those that survived the alignment filtering step?
+//        // known insertion mappings from filtered out alignments
+//        if ( !tigWithInsMappings.getInsertionMappings().isEmpty() ) {
+//            attributeMap.put(INSERTED_SEQUENCE_MAPPINGS,
+//                    String.join(VCFConstants.INFO_FIELD_ARRAY_SEPARATOR, tigWithInsMappings.getInsertionMappings()));
+//        }
+
+        return attributeMap;
+    }
+
+    // =================================================================================================================
 
     private static final class UnhandledCaseSeen extends GATKException.ShouldNeverReachHereException {
         private static final long serialVersionUID = 0L;
