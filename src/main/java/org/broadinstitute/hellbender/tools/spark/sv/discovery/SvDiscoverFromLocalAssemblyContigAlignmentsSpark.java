@@ -167,7 +167,7 @@ public final class SvDiscoverFromLocalAssemblyContigAlignmentsSpark extends GATK
                 AssemblyContigAlignmentsConfigPicker
                         .createOptimalCoverageAlignmentSetsForContigs(assemblyRawAlignments, headerBroadcast.getValue(),
                                 nonCanonicalChromosomeNamesFile, 0.0, toolLogger)
-                        .filter(lr -> lr.alignmentIntervals.size() > 1).cache();
+                        .filter(AlignedContig::isInformative).cache();
         toolLogger.info( contigsWithChimericAlignmentsReconstructed.count() +
                 " contigs with chimeric alignments potentially giving SV signals.");
 
