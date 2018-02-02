@@ -197,7 +197,7 @@ public class GencodeFuncotation implements Funcotation {
     public void setFieldSerializationOverrideValue( final String fieldName, final String overrideValue ) {
 
         // Cut off the "Gencode" and version number at the start of the string:
-        final String shortFieldName = fieldName.replaceAll("^" + GencodeFuncotationFactory.DATA_SOURCE_NAME + "_" + version, "");
+        final String shortFieldName = fieldName.replaceAll("^" + GencodeFuncotationFactory.DATA_SOURCE_NAME + "_" + version + "_", "");
 
         switch (shortFieldName) {
             case "hugoSymbol": hugoSymbolSerializedOverride = overrideValue; break;

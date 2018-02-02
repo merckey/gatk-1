@@ -1496,8 +1496,8 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
 
         final List<GencodeFuncotation> gencodeFuncotations = new ArrayList<>();
 
-        for ( final Allele allele : variant.getAlternateAlleles() ) {
-            gencodeFuncotations.add( createIgrFuncotation(variant.getReference(), allele, reference) );
+        for ( final Allele altAllele : variant.getAlternateAlleles() ) {
+            gencodeFuncotations.add( createIgrFuncotation(variant.getReference(), altAllele, reference) );
         }
 
         return gencodeFuncotations;
@@ -1543,8 +1543,8 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
      * @return An IGR funcotation for the given allele.
      */
     private GencodeFuncotation createIgrFuncotation(final Allele refAllele,
-                                                           final Allele altAllele,
-                                                           final ReferenceContext reference){
+                                                    final Allele altAllele,
+                                                    final ReferenceContext reference){
 
         final GencodeFuncotationBuilder funcotationBuilder = new GencodeFuncotationBuilder();
 

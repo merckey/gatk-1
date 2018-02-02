@@ -212,7 +212,7 @@ public class CosmicFuncotationFactoryUnitTest extends GATKBaseTest {
                                 new GencodeFuncotationBuilder().setHugoSymbol("PIK3CA").setChromosome("chr3").setStart(178921553).setEnd(178952085).setProteinChange("p.E1T").build()
                         ),
                         Collections.singletonList(
-                                new TableFuncotation(Collections.singletonList("Cosmic_overlapping_mutations"), Collections.singletonList("5"), Allele.create("A"), "Cosmic")
+                                new TableFuncotation(Collections.singletonList("Cosmic_overlapping_mutations"), Collections.singletonList("5"), Allele.create(String.join("", Collections.nCopies(178952085 - 178921553 + 1, "A"))), "Cosmic")
                         )
                 ),
         };
