@@ -275,8 +275,8 @@ public class SomaticGenotypingEngine extends AssemblyBasedCallerGenotypingEngine
 
                 if (read.allele.equals(mate.allele)) {
                     if (overlapStrategy.isDiscardWorseRead()) {
-                        final GATKRead betterRead = read.likelihood < mate.likelihood ? read.read : mate.read;
-                        final GATKRead worseRead = read.likelihood < mate.likelihood ? mate.read : read.read;
+                        final GATKRead betterRead = read.likelihood > mate.likelihood ? read.read : mate.read;
+                        final GATKRead worseRead = read.likelihood > mate.likelihood ? mate.read : read.read;
                         final int betterIndex = sampleMatrix.indexOfRead(betterRead);
                         final int worseIndex = sampleMatrix.indexOfRead(worseRead);
                         final int alleleIndex = likelihoods.indexOfAllele(read.allele);
