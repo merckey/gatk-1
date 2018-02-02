@@ -1178,11 +1178,21 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
             refAllele = Allele.create(ReadUtils.getBasesReverseComplement( variant.getReference().getBases() ), true);
             altAllele = Allele.create(ReadUtils.getBasesReverseComplement( alternateAllele.getBases() ), false);
 
-            // Calculate our window to include any extra bases but also have the right referenceWindow:
-            final int endWindow = refAllele.length() >= altAllele.length() ? referenceWindow + refAllele.length() - 1: referenceWindow + altAllele.length() - 1;
+            // Calculate our window to include any extra bases but also have the right referenceWindow.
+            final int frontPadding = refAllele.length() >= altAllele.length() ? referenceWindow + refAllele.length() - 1: referenceWindow + altAllele.length() - 1;
 
             // Get the reference sequence:
-            referenceBases = ReadUtils.getBasesReverseComplement(reference.getBases(new SimpleInterval(currentReferenceWindow.getContig(), currentReferenceWindow.getStart() - referenceWindow, currentReferenceWindow.getEnd() + endWindow)));
+            // NOTE: The "frontPadding" actually adds padding to the back of the coding sequence because we the strand
+            //       is negative and we have to reverse complement the bases.
+            //       However, we pass in the overall interval before reverse complementing, so this padding happens on
+            //       the front of the query interval.
+            referenceBases = ReadUtils.getBasesReverseComplement(
+                    reference.getBases(
+                            new SimpleInterval(currentReferenceWindow.getContig(),
+                                    currentReferenceWindow.getStart() - frontPadding,
+                                    currentReferenceWindow.getEnd() + referenceWindow)
+                    )
+            );
         }
 
         // Set our reference sequence in the SequenceComparison:
