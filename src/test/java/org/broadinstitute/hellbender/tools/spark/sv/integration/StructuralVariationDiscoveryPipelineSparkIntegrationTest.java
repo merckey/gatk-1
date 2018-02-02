@@ -32,7 +32,6 @@ import static org.broadinstitute.hellbender.tools.spark.sv.integration.DiscoverV
 public class StructuralVariationDiscoveryPipelineSparkIntegrationTest extends CommandLineProgramTest {
 
     private static final class StructuralVariationDiscoveryPipelineSparkIntegrationTestArgs {
-        private static final String EXPERIMENTAL_INTERPRETATION_OUTPUT_DIR_NAME = "experimentalVariantInterpretations";
 
         final String bamLoc;
         final String kmerIgnoreListLoc;
@@ -63,12 +62,7 @@ public class StructuralVariationDiscoveryPipelineSparkIntegrationTest extends Co
                     " --breakpoint-intervals " + outputDir + "/intervals" +
                     " --fastq-dir "            + outputDir + "/fastq" +
                     (cnvCallsLoc == null ? "" : " --cnv-calls " + cnvCallsLoc) +
-                    " --exp-variants-out-dir " + getExperimentalInterpretationOutputDirName(outputDir + "/variants.vcf");
-        }
-
-        private static String getExperimentalInterpretationOutputDirName(final String vcfPath) {
-            return Paths.get(vcfPath).getParent().resolve(EXPERIMENTAL_INTERPRETATION_OUTPUT_DIR_NAME)
-                    .toAbsolutePath().toString();
+                    " --exp-variants-out-prefix " + outputDir + "/expInterpret";
         }
 
         @Override
@@ -110,7 +104,7 @@ public class StructuralVariationDiscoveryPipelineSparkIntegrationTest extends Co
         runCommandLine(args);
 
         svDiscoveryVCFEquivalenceTest(args.get(args.indexOf("-O")+1), SVIntegrationTestDataProvider.EXPECTED_SIMPLE_DEL_VCF,
-                args.get(args.indexOf("--exp-variants-out-dir")+1),
+                args.get(args.indexOf("--exp-variants-out-prefix")+1).concat("NonComplex.vcf"),
                 annotationsToIgnoreWhenComparingVariants, false);
     }
 
@@ -167,19 +161,20 @@ public class StructuralVariationDiscoveryPipelineSparkIntegrationTest extends Co
             path = new Path(workingDirectory, "fastq");
             argsToBeModified.set(idx+1, path.toUri().toString());
 
-            idx = argsToBeModified.indexOf("--exp-variants-out-dir");
-            path = new Path(workingDirectory, "expVariantsOutDir");
+            idx = argsToBeModified.indexOf("--exp-variants-out-prefix");
+            path = new Path(workingDirectory, "expInterpret");
             final String expOutDirOnHDFS = path.toUri().toString();
             argsToBeModified.set(idx+1, expOutDirOnHDFS);
 
             runCommandLine(argsToBeModified);
             svDiscoveryVCFEquivalenceTest(vcfOnHDFS, SVIntegrationTestDataProvider.EXPECTED_SIMPLE_DEL_VCF,
-                    expOutDirOnHDFS, annotationsToIgnoreWhenComparingVariants, true);
+                    expOutDirOnHDFS+"NonComplex.vcf", annotationsToIgnoreWhenComparingVariants,
+                    true);
         });
     }
 
     static void svDiscoveryVCFEquivalenceTest(final String generatedVCFPath, final String expectedVCFPath,
-                                              final String experimentalOutputPath,
+                                              final String experimentalOutputPathForNonComplex,
                                               final List<String> attributesToIgnore, final boolean onHDFS) throws Exception {
 
         final VCFFileReader fileReader = new VCFFileReader(new File(expectedVCFPath), false);
@@ -193,8 +188,8 @@ public class StructuralVariationDiscoveryPipelineSparkIntegrationTest extends Co
         GATKBaseTest.assertCondition(actualVcs, expectedVcs,
                 (a, e) -> VariantContextTestUtils.assertVariantContextsAreEqual(a, e, attributesToIgnore));
 
-        if ( experimentalOutputPath != null ) {
-            final java.nio.file.Path path = IOUtils.getPath(experimentalOutputPath).resolve("nonComplex.vcf");
+        if ( experimentalOutputPathForNonComplex != null ) {
+            final java.nio.file.Path path = IOUtils.getPath(experimentalOutputPathForNonComplex);
             final String experimentalInsDelVcf = onHDFS ? path.toUri().toString() : path.toString();
             actualVcs = extractActualVCs(experimentalInsDelVcf, onHDFS);
 

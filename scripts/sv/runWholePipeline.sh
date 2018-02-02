@@ -68,7 +68,7 @@ case ${GATK_SV_TOOL} in
             --fastq-dir ${PROJECT_OUTPUT_DIR}/fastq \
             --contig-sam-file ${PROJECT_OUTPUT_DIR}/assemblies.sam \
             --target-link-file ${PROJECT_OUTPUT_DIR}/target_links.bedpe \
-            --exp-variants-out-dir ${PROJECT_OUTPUT_DIR}/experimentalVariantInterpretations"
+            --exp-variants-out-prefix ${PROJECT_OUTPUT_DIR}/variants/expInterpret"
         ;;
     "ExtractSVEvidenceSpark")
         TOOL_OPTIONS="\

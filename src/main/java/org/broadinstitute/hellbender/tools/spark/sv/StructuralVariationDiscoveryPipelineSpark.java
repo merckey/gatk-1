@@ -114,10 +114,9 @@ public class StructuralVariationDiscoveryPipelineSpark extends GATKSparkTool {
             fullName = StandardArgumentDefinitions.OUTPUT_LONG_NAME)
     private String vcfOutputFileName;
     @Advanced
-    @Argument(doc = "directory to output results of our prototyping breakpoint and type inference tool in addition to the master VCF;" +
-            " the directory contains multiple VCF's for different types and record-generating SAM files of assembly contigs,",
-            fullName = "exp-variants-out-dir", optional = true)
-    private String expVariantsOutDir;
+    @Argument(doc = "prefix to output files of our prototyping breakpoint and type inference tool in addition to the master VCF;",
+            fullName = "exp-variants-out-prefix", optional = true)
+    private String expVariantsOutPrefix;
 
     @Override
     public boolean requiresReads()
@@ -185,8 +184,8 @@ public class StructuralVariationDiscoveryPipelineSpark extends GATKSparkTool {
         SVVCFWriter.writeVCF(annotatedVariants, outputPath, refSeqDictionary, toolLogger);
 
         // TODO: 1/14/18 this is the next version of precise variant calling
-        if ( expVariantsOutDir != null ) {
-            svDiscoveryInputData.updateOutputPath(expVariantsOutDir);
+        if ( expVariantsOutPrefix != null ) {
+            svDiscoveryInputData.updateOutputPath(expVariantsOutPrefix);
             experimentalInterpretation(ctx, assembledEvidenceResults, svDiscoveryInputData, evidenceAndAssemblyArgs.crossContigsToIgnoreFile);
         }
     }
@@ -240,7 +239,7 @@ public class StructuralVariationDiscoveryPipelineSpark extends GATKSparkTool {
                                             final SvDiscoveryInputData svDiscoveryInputData,
                                             final String nonCanonicalChromosomeNamesFile) {
 
-        if ( expVariantsOutDir == null )
+        if ( expVariantsOutPrefix == null )
             return;
 
         final Broadcast<SAMSequenceDictionary> referenceSequenceDictionaryBroadcast = svDiscoveryInputData.referenceSequenceDictionaryBroadcast;
@@ -263,7 +262,7 @@ public class StructuralVariationDiscoveryPipelineSpark extends GATKSparkTool {
         final Broadcast<SVIntervalTree<VariantContext>> cnvCallsBroadcast = svDiscoveryInputData.cnvCallsBroadcast;
 
         final SvDiscoveryInputData updatedSvDiscoveryInputData =
-                new SvDiscoveryInputData(sampleId, svDiscoveryInputData.discoverStageArgs, expVariantsOutDir,
+                new SvDiscoveryInputData(sampleId, svDiscoveryInputData.discoverStageArgs, expVariantsOutPrefix,
                         svDiscoveryInputData.metadata, svDiscoveryInputData.assembledIntervals,
                         svDiscoveryInputData.evidenceTargetLinks, reads, svDiscoveryInputData.toolLogger,
                         referenceBroadcast, referenceSequenceDictionaryBroadcast, headerBroadcast, cnvCallsBroadcast);
