@@ -1305,9 +1305,15 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
         );
 
         // Set our alternate amino acid sequence:
-        sequenceComparison.setAlternateAminoAcidSequence(
-                FuncotatorUtils.createAminoAcidSequence(sequenceComparison.getAlignedCodingSequenceAlternateAllele())
-        );
+        // We only need to do this if we don't have a frame-shift:
+        if ( GATKVariantContextUtils.isFrameshift(refAllele, altAllele) ) {
+            sequenceComparison.setAlternateAminoAcidSequence("");
+        }
+        else{
+            sequenceComparison.setAlternateAminoAcidSequence(
+                    FuncotatorUtils.createAminoAcidSequence(sequenceComparison.getAlignedCodingSequenceAlternateAllele())
+            );
+        }
 
         // Set our protein end position:
         sequenceComparison.setProteinChangeEndPosition(
