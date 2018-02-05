@@ -765,12 +765,6 @@ public final class FuncotatorUtils {
                 }
                 else {
                     if ( isIndelBetweenCodons(seqComp.getCodingSequenceAlleleStart(), seqComp.getAlignedCodingSequenceAlleleStart(), seqComp.getReferenceAllele()) ) {
-//                        final String nextRefCodon = getNextReferenceCodon(seqComp.getTranscriptCodingSequence(), seqComp.getAlignedCodingSequenceAlleleStart(), seqComp.getAlignedReferenceAlleleStop(), seqComp.getStrand());
-//
-//                         Here we adjust everything "right" by 3 bases (1 codon) because of the leading base that is
-//                         required for indels:
-//                        return "p." + protChangeStartPos + "_" + protChangeEndPos +
-//                                createAminoAcidSequence(nextRefCodon) + ">" + createAminoAcidSequence(seqComp.getAlignedAlternateAllele().substring(3) + nextRefCodon);
                         return "p." + protChangeStartPos + "_" + (protChangeStartPos + 1) + "ins"+
                                 createAminoAcidSequence(seqComp.getAlignedAlternateAllele().substring(3));
                     }
@@ -949,23 +943,6 @@ public final class FuncotatorUtils {
         }
 
         return offset;
-    }
-
-    private static String collapseNonFrameshiftProteinChangeString(final int proteinChangeStartPosition, final int proteinChangeEndPosition,
-                                                                   final String refAaSeq, final String altAaSeq ) {
-        if ( proteinChangeStartPosition == proteinChangeEndPosition ) {
-            if ( altAaSeq.isEmpty() ) {
-                return "p." + refAaSeq + proteinChangeStartPosition + "del";
-            }
-            else {
-                return "p." + proteinChangeStartPosition + "_" + proteinChangeEndPosition + "ins"
-                        + altAaSeq;
-            }
-        }
-        else {
-            return "p." + proteinChangeStartPosition + "_" + proteinChangeEndPosition
-                    + refAaSeq + ">" + altAaSeq;
-        }
     }
 
     /**
@@ -1250,7 +1227,18 @@ public final class FuncotatorUtils {
      * @param codingSequence The coding sequence from which to create an amino acid sequence.  Must not be {@code null}.
      * @return A {@link String} containing a sequence of single-letter amino acids.
      */
-    public static String createAminoAcidSequence(final String codingSequence) {
+    public static String createAminoAcidSequence( final String codingSequence ) {
+        return createAminoAcidSequence(codingSequence, false);
+    }
+
+    /**
+     * Creates an amino acid sequence from a given coding sequence.
+     * If the coding sequence is not evenly divisible by 3, the remainder bases will not be included in the coding sequence.
+     * @param codingSequence The coding sequence from which to create an amino acid sequence.  Must not be {@code null}.
+     * @param isFrameshift Whether the given {@code codingSequence} was derived from a frameshift mutation.  In this case, no warning will be issued for incorrect sequence length.
+     * @return A {@link String} containing a sequence of single-letter amino acids.
+     */
+    public static String createAminoAcidSequence(final String codingSequence, final boolean isFrameshift) {
 
         Utils.nonNull(codingSequence);
 
@@ -1260,7 +1248,9 @@ public final class FuncotatorUtils {
         int maxIndex = codingSequence.length();
         if ( maxIndex % 3 != 0 ) {
             maxIndex = (int)Math.floor(maxIndex / 3) * 3;
-            logger.warn("createAminoAcidSequence given a coding sequence of length not divisible by 3.  Dropping bases from the end: " + (codingSequence.length() % 3));
+            if ( !isFrameshift ) {
+                logger.warn("createAminoAcidSequence given a coding sequence of length not divisible by 3.  Dropping bases from the end: " + (codingSequence.length() % 3));
+            }
         }
 
         for ( int i = 0; i < maxIndex; i += 3 ) {

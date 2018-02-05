@@ -60,6 +60,7 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
      * The window around a variant to include in the reference context annotation.
      * Also used for context from which to get surrounding codon changes and protein changes.
      */
+    // TODO: Make this a parameter:
     final static private int referenceWindow = 10;
 
     /**
@@ -617,9 +618,6 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
                                                              final GencodeGtfTranscriptFeature transcript,
                                                              final GencodeGtfExonFeature exon) {
 
-        // Setup the "trivial" fields of the gencodeFuncotation:
-        final GencodeFuncotationBuilder gencodeFuncotationBuilder = createGencodeFuncotationBuilderWithTrivialFieldsPopulated(variant, altAllele, gtfFeature, transcript);
-
         // Get the list of exons by their locations so we can use them to determine our location in the transcript and get
         // the transcript code itself:
         final List<? extends Locatable> exonPositionList = getSortedExonAndStartStopPositions(transcript);
@@ -628,9 +626,15 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
         // These fields can all be set without knowing the alternate allele:
         final SequenceComparison sequenceComparison = createSequenceComparison(variant, altAllele, reference, transcript, exonPositionList, transcriptIdMap, transcriptFastaReferenceDataSource);
 
-        final GencodeFuncotation.VariantType variantType = getVariantType(variant.getReference(), altAllele);
+        // NOTE: Regardless of strandedness, we always report the alleles as if they appeared in the forward direction.
+        final GencodeFuncotation.VariantType variantType =
+                getVariantType(variant.getReference(),
+                               altAllele);
 
         // OK, now that we have our SequenceComparison object set up we can continue the annotation:
+
+        // Setup the "trivial" fields of the gencodeFuncotation:
+        final GencodeFuncotationBuilder gencodeFuncotationBuilder = createGencodeFuncotationBuilderWithTrivialFieldsPopulated(variant, altAllele, gtfFeature, transcript);
 
         // Set the exon number:
         gencodeFuncotationBuilder.setTranscriptExonNumber( exon.getExonNumber() );
@@ -1158,8 +1162,6 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
         final Allele refAllele;
         final Allele altAllele;
 
-        // TODO: Make this a parameter:
-        final int referenceWindow = 10;
         final String referenceBases;
 
         final SimpleInterval currentReferenceWindow = reference.getWindow();
@@ -1306,14 +1308,12 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
 
         // Set our alternate amino acid sequence:
         // We only need to do this if we don't have a frame-shift:
-        if ( GATKVariantContextUtils.isFrameshift(refAllele, altAllele) ) {
-            sequenceComparison.setAlternateAminoAcidSequence("");
-        }
-        else{
-            sequenceComparison.setAlternateAminoAcidSequence(
-                    FuncotatorUtils.createAminoAcidSequence(sequenceComparison.getAlignedCodingSequenceAlternateAllele())
-            );
-        }
+        sequenceComparison.setAlternateAminoAcidSequence(
+                FuncotatorUtils.createAminoAcidSequence(
+                        sequenceComparison.getAlignedCodingSequenceAlternateAllele(),
+                        GATKVariantContextUtils.isFrameshift(refAllele, altAllele)
+                )
+        );
 
         // Set our protein end position:
         sequenceComparison.setProteinChangeEndPosition(
@@ -1370,7 +1370,8 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
          final GencodeFuncotationBuilder gencodeFuncotationBuilder = new GencodeFuncotationBuilder();
          final Strand strand = Strand.decode(transcript.getGenomicStrand().toString());
 
-         gencodeFuncotationBuilder.setRefAlleleAndStrand(variant.getReference(), strand)
+         gencodeFuncotationBuilder.setRefAllele(variant.getReference())
+                 .setStrand(strand)
                  .setHugoSymbol(gtfFeature.getGeneName())
                  .setNcbiBuild(gtfFeature.getUcscGenomeVersion())
                  .setChromosome(gtfFeature.getChromosomeName())
@@ -1399,7 +1400,9 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
 
          // Get the length of the transcript:
          // NOTE: We add 1 because of genomic cordinates:
-         gencodeFuncotationBuilder.setTranscriptLength( transcript.getEnd() - transcript.getStart() + 1);return gencodeFuncotationBuilder;
+         gencodeFuncotationBuilder.setTranscriptLength( transcript.getEnd() - transcript.getStart() + 1);
+
+         return gencodeFuncotationBuilder;
     }
 
     /**
@@ -1567,10 +1570,11 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
         // Get GC Content:
         funcotationBuilder.setGcContent( calculateGcContent( reference, gcContentWindowSizeBases ) );
 
-        funcotationBuilder.setVariantClassification( GencodeFuncotation.VariantClassification.IGR );
-        funcotationBuilder.setRefAlleleAndStrand( refAllele, Strand.POSITIVE );
-        funcotationBuilder.setTumorSeqAllele1( refAllele.getBaseString() );
-        funcotationBuilder.setTumorSeqAllele2( altAllele.getBaseString() );
+        funcotationBuilder.setVariantClassification( GencodeFuncotation.VariantClassification.IGR )
+                          .setRefAllele( refAllele )
+                          .setStrand(Strand.POSITIVE)
+                          .setTumorSeqAllele1( refAllele.getBaseString() )
+                          .setTumorSeqAllele2( altAllele.getBaseString() );
 
         final String referenceBases = FuncotatorUtils.getBasesInWindowAroundReferenceAllele(refAllele, altAllele, Strand.POSITIVE, referenceWindow, reference);
 
