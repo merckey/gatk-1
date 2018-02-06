@@ -476,7 +476,6 @@ public class Funcotator extends VariantWalker {
             if ( funcotationFactory.getType().equals(FuncotatorArgumentDefinitions.DataSourceType.GENCODE) ) {
                 continue;
             }
-
             funcotations.addAll( funcotationFactory.createFuncotations(variantContextFixedContigForDataSources, referenceContext, featureList, gencodeFuncotations) );
         }
 

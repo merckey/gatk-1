@@ -181,6 +181,7 @@ public class MafOutputRenderer extends OutputRenderer {
 
         // Update the Default map with manual annotations that we have
         // and remove those annotations from the manual map:
+        // NOTE: We must check the outputFieldNameMap in case we override an aliased output field:
         final Iterator<Map.Entry<String, String>> it = manualAnnotations.entrySet().iterator();
         while ( it.hasNext() ) {
             final Map.Entry<String, String> manualAnnotation = it.next();
@@ -188,7 +189,26 @@ public class MafOutputRenderer extends OutputRenderer {
                 defaultMap.put(manualAnnotation.getKey(), manualAnnotation.getValue());
                 it.remove();
             }
+            else {
+                // Check the aliased output fields.
+                // NOTE: A field may be aliased many times, so we should check ALL fields before
+                //       removing the iterator and moving to the next value:
+                boolean isAliasedName = false;
+                for ( final Map.Entry<String, List<String>> entry : outputFieldNameMap.entrySet() ) {
+                    if ( entry.getValue().contains(manualAnnotation.getKey())) {
+                        isAliasedName = true;
+                        defaultMap.put( entry.getKey(), manualAnnotation.getValue() );
+                    }
+                }
+                if (isAliasedName) {
+                    it.remove();
+                }
+            }
         }
+
+        // Set values for unused fields:
+        defaultMap.put("Score", UNUSED_STRING);
+        defaultMap.put("BAM_File", UNUSED_STRING);
 
         // Cache the manual annotation string so we can pass it easily into any Funcotations:
         manualAnnotationSerializedString = (manualAnnotations.size() != 0 ? FIELD_DELIMITER + String.join( FIELD_DELIMITER, manualAnnotations.values() ) + FIELD_DELIMITER : "");
@@ -217,6 +237,7 @@ public class MafOutputRenderer extends OutputRenderer {
     public void write(final VariantContext variant, final List<Funcotation> funcotations) {
 
         // Make sure we only output the variant here if it passed all filters:
+        //TODO: Make this an option (Issue #4358).
         if ( variant.isFiltered() ) {
             // We can ignore this variant since it was filtered out.
             return;
@@ -238,10 +259,6 @@ public class MafOutputRenderer extends OutputRenderer {
                     }
                 }
             }
-
-            // Set values for unused fields:
-            outputMap.put("Score", UNUSED_STRING);
-            outputMap.put("BAM_File", UNUSED_STRING);
 
             // Go through all output fields and see if any of the names in the value list are in our extraFieldOutputMap.
             // For any that match, we remove them from our extraFieldOutputMap and add them to the outputMap with the
@@ -398,7 +415,7 @@ public class MafOutputRenderer extends OutputRenderer {
     /**
      * Set the field in the given {@code outputMap} specified by the given {@code key} to the given {@code value}.
      * Checks the given {@code key} to see if the given {@code value} must be transformed to be a valid MAF field.
-     * Will only set this field if the given {@code value} is not null and when evaluated as a {@link String} is not empty.
+     * Will only set this field if the given {@code value} is not {@code null}.
      * @param outputMap {@link Map} of {@link String} to {@link Object} to hold output annotations.  Must not be {@code null}.
      * @param key {@link String} key to add to the output map.  Must not be {@code null}.
      * @param value {@link Object} value for the output map.

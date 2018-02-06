@@ -50,9 +50,23 @@ public class LocatableXsvFuncotationFactory extends DataSourceFuncotationFactory
     private final String name;
 
     /**
-     * Names of all fields supported by this {@link LocatableXsvFuncotationFactory}.
+     * {@link LinkedHashSet} of the names of all fields supported by this {@link LocatableXsvFuncotationFactory}.
+     * Set by {@link #setSupportedFuncotationFields(List)}.
      */
     private LinkedHashSet<String> supportedFieldNames = null;
+
+    /**
+     * {@link List} of the names of all fields supported by this {@link LocatableXsvFuncotationFactory}.
+     * Set by {@link #setSupportedFuncotationFields(List)}.
+     */
+    private List<String> supportedFieldNameList = null;
+
+    /**
+     * {@link List} of empty {@link String}s of the same length as {@link #supportedFieldNames}.
+     * Cached for faster output.
+     * Set by {@link #setSupportedFuncotationFields(List)}.
+     */
+    private List<String> emptyFieldList = null;
 
     //==================================================================================================================
     // Constructors:
@@ -89,17 +103,42 @@ public class LocatableXsvFuncotationFactory extends DataSourceFuncotationFactory
     public List<Funcotation> createFuncotations(final VariantContext variant, final ReferenceContext referenceContext, final List<Feature> featureList) {
         final List<Funcotation> outputFuncotations = new ArrayList<>();
 
+        // Create a set to put our annotated Alternate alleles in.
+        // We'll use this to determine if the alt allele has been annotated.
+        final Set<Allele> annotatedAltAlleles = new HashSet<>(variant.getAlternateAlleles().size());
+
         if ( !featureList.isEmpty() ) {
             for ( final Feature feature : featureList ) {
+
                 // Get the kind of feature we want here:
                 if ( (feature != null) && XsvTableFeature.class.isAssignableFrom(feature.getClass()) ) {
-                    // Now we create one funcotation for each Alternate allele:
-                    for ( final Allele altAllele : variant.getAlternateAlleles() ) {
-                        outputFuncotations.add(new TableFuncotation((XsvTableFeature) feature, altAllele, name));
+
+                    // Make sure we are annotating the correct XSVTableFeature:
+                    final XsvTableFeature tableFeature = (XsvTableFeature) feature;
+                    if ( tableFeature.getDataSourceName().equals(name) ) {
+
+                        // Now we create one funcotation for each Alternate allele:
+                        for ( final Allele altAllele : variant.getAlternateAlleles() ) {
+                            outputFuncotations.add(new TableFuncotation(tableFeature, altAllele, name));
+                            annotatedAltAlleles.add(altAllele);
+                        }
                     }
                 }
             }
         }
+
+        // If we didn't add funcotations for an allele, we should add in blank funcotations to that allele for each field that can be produced
+        // by this LocatableXsvFuncotationFactory:
+        if ( annotatedAltAlleles.size() != variant.getAlternateAlleles().size() ) {
+            for ( final Allele altAllele : variant.getAlternateAlleles() ) {
+                if ( !annotatedAltAlleles.contains(altAllele) ) {
+                    outputFuncotations.add(new TableFuncotation(supportedFieldNameList, emptyFieldList, altAllele, name));
+                }
+            }
+        }
+
+        // Set our overrides:
+        setOverrideValuesInFuncotations(outputFuncotations);
 
         return outputFuncotations;
     }
@@ -173,6 +212,13 @@ public class LocatableXsvFuncotationFactory extends DataSourceFuncotationFactory
                     supportedFieldNames.add(header.get(i));
                 }
             }
+        }
+
+        // Initialize our field name lists:
+        supportedFieldNameList = new ArrayList<>(supportedFieldNames);
+        emptyFieldList = new ArrayList<>(supportedFieldNameList.size());
+        for ( final String s : supportedFieldNameList) {
+            emptyFieldList.add("");
         }
     }
 
