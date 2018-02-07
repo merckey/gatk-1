@@ -80,6 +80,16 @@ public class LocatableXsvFuncotationFactory extends DataSourceFuncotationFactory
         this.version = version;
     }
 
+    @VisibleForTesting
+    LocatableXsvFuncotationFactory(final String name, final String version, final List<String> supportedFields){
+        this.name = name;
+        this.version = version;
+
+        supportedFieldNames = new LinkedHashSet<>(supportedFields);
+        initializeFieldNameLists();
+
+    }
+
     //==================================================================================================================
     // Override Methods:
 
@@ -161,60 +171,79 @@ public class LocatableXsvFuncotationFactory extends DataSourceFuncotationFactory
 
     public void setSupportedFuncotationFields(final List<Path> inputDataFilePaths) {
 
-        // Approximate starting size:
-        supportedFieldNames = new LinkedHashSet<>(inputDataFilePaths.size() * 10);
+        if ( supportedFieldNames == null ) {
+            synchronized ( this ) {
+                if ( supportedFieldNames == null ) {
 
-        for ( final Path dataPath : inputDataFilePaths ) {
+                    // Approximate starting size:
+                    supportedFieldNames = new LinkedHashSet<>(inputDataFilePaths.size() * 10);
 
-            // Get the associated config file:
-            final Path configPath = XsvLocatableTableCodec.getConfigFilePath(dataPath);
+                    for ( final Path dataPath : inputDataFilePaths ) {
 
-            // Get the associated config properties:
-            final Properties configProperties = XsvLocatableTableCodec.getAndValidateConfigFileContents(configPath);
+                        // Get the associated config file:
+                        final Path configPath = XsvLocatableTableCodec.getConfigFilePath(dataPath);
 
-            final int contigColumn   = Integer.valueOf(configProperties.getProperty(XsvLocatableTableCodec.CONFIG_FILE_CONTIG_COLUMN_KEY));
-            final int startColumn    = Integer.valueOf(configProperties.getProperty(XsvLocatableTableCodec.CONFIG_FILE_START_COLUMN_KEY));
-            final int endColumn      = Integer.valueOf(configProperties.getProperty(XsvLocatableTableCodec.CONFIG_FILE_END_COLUMN_KEY));
-            final String delimiter      = configProperties.getProperty(XsvLocatableTableCodec.CONFIG_FILE_DELIMITER_KEY);
-            final String dataSourceName = configProperties.getProperty(XsvLocatableTableCodec.CONFIG_FILE_DATA_SOURCE_NAME_KEY);
+                        // Get the associated config properties:
+                        final Properties configProperties = XsvLocatableTableCodec.getAndValidateConfigFileContents(configPath);
 
-            // Create our index to remove list:
-            final Set<Integer> indicesToRemove = new HashSet<>(Arrays.asList(contigColumn, startColumn, endColumn));
+                        final int contigColumn   = Integer.valueOf(configProperties.getProperty(XsvLocatableTableCodec.CONFIG_FILE_CONTIG_COLUMN_KEY));
+                        final int startColumn    = Integer.valueOf(configProperties.getProperty(XsvLocatableTableCodec.CONFIG_FILE_START_COLUMN_KEY));
+                        final int endColumn      = Integer.valueOf(configProperties.getProperty(XsvLocatableTableCodec.CONFIG_FILE_END_COLUMN_KEY));
+                        final String delimiter      = configProperties.getProperty(XsvLocatableTableCodec.CONFIG_FILE_DELIMITER_KEY);
+                        final String dataSourceName = configProperties.getProperty(XsvLocatableTableCodec.CONFIG_FILE_DATA_SOURCE_NAME_KEY);
 
-            // Get the raw header:
-            List<String> header = null;
-            try( final BufferedReader inputReader =
-                         new BufferedReader(new InputStreamReader(Files.newInputStream(dataPath, StandardOpenOption.READ))) ) {
+                        // Create our index to remove list:
+                        final Set<Integer> indicesToRemove = new HashSet<>(Arrays.asList(contigColumn, startColumn, endColumn));
 
-                String line = inputReader.readLine();
-                while (line != null) {
-                    if ( !line.startsWith(XsvLocatableTableCodec.COMMENT_DELIMITER) ) {
-                        header = Arrays.stream(line.split(delimiter))
-                                .map(x -> dataSourceName + "_" + x)
-                                .collect(Collectors.toCollection(ArrayList::new));
-                        break;
+                        // Get the raw header:
+                        List<String> header = null;
+                        try( final BufferedReader inputReader =
+                                     new BufferedReader(new InputStreamReader(Files.newInputStream(dataPath, StandardOpenOption.READ))) ) {
+
+                            String line = inputReader.readLine();
+                            while (line != null) {
+                                if ( !line.startsWith(XsvLocatableTableCodec.COMMENT_DELIMITER) ) {
+                                    header = Arrays.stream(line.split(delimiter))
+                                            .map(x -> dataSourceName + "_" + x)
+                                            .collect(Collectors.toCollection(ArrayList::new));
+                                    break;
+                                }
+                                line = inputReader.readLine();
+                            }
+                        }
+                        catch (final Exception ex) {
+                            throw new UserException.BadInput("Error while reading from input data file: " + dataPath.toUri().toString(), ex);
+                        }
+
+                        // Make sure we actually read the header:
+                        if ( header == null ) {
+                            throw new UserException.MalformedFile("Could not read header from data file: " + dataPath.toUri().toString());
+                        }
+
+                        // Add the header fields to the supportedFieldNames:
+                        for ( int i = 0 ; i < header.size() ; ++i ) {
+                            if ( !indicesToRemove.contains(i) ) {
+                                supportedFieldNames.add(header.get(i));
+                            }
+                        }
                     }
-                    line = inputReader.readLine();
-                }
-            }
-            catch (final Exception ex) {
-                throw new UserException.BadInput("Error while reading from input data file: " + dataPath.toUri().toString(), ex);
-            }
 
-            // Make sure we actually read the header:
-            if ( header == null ) {
-                throw new UserException.MalformedFile("Could not read header from data file: " + dataPath.toUri().toString());
-            }
-
-            // Add the header fields to the supportedFieldNames:
-            for ( int i = 0 ; i < header.size() ; ++i ) {
-                if ( !indicesToRemove.contains(i) ) {
-                    supportedFieldNames.add(header.get(i));
+                    // Initialize our field name lists:
+                    initializeFieldNameLists();
                 }
             }
         }
+    }
 
-        // Initialize our field name lists:
+    /**
+     * Initialize {@link #supportedFieldNameList} and {@link #emptyFieldList} given a populated {@link #supportedFieldNames}.
+     */
+    private void initializeFieldNameLists() {
+
+        if ( supportedFieldNames == null ) {
+            throw new GATKException("Must set supportedFuncotationFields before initializing field name lists!");
+        }
+
         supportedFieldNameList = new ArrayList<>(supportedFieldNames);
         emptyFieldList = new ArrayList<>(supportedFieldNameList.size());
         for ( final String s : supportedFieldNameList) {
