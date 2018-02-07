@@ -325,11 +325,11 @@ public class MafOutputRenderer extends OutputRenderer {
                 //    Remove the first N bases from the ALT_allele where N = length(ref_allele)
                 //    Replace the ref_allele with "-"
                 //    Replace the Tumor_Seq_Allele1 with "-"
-                //    Increment the start position by N
+                //    Set the End_Position to be Start_Position + 1 (All Insertions should have length 1 to represent the bases between which the insertion occurs).
                 finalOutMap.put("Tumor_Seq_Allele2", finalOutMap.get("Tumor_Seq_Allele2").substring(refAlleleLength));
                 finalOutMap.put("Reference_Allele", "-");
                 finalOutMap.put("Tumor_Seq_Allele1", "-");
-                finalOutMap.put("Start_Position", String.valueOf(Integer.valueOf(finalOutMap.get("Start_Position")) + refAlleleLength));
+                finalOutMap.put("End_Position", String.valueOf(Integer.valueOf(finalOutMap.get("Start_Position")) + 1));
             }
             // Check to see if it's a deletion:
             else if ( refAlleleLength > altAlleleLength ) {
@@ -337,11 +337,13 @@ public class MafOutputRenderer extends OutputRenderer {
                 //    Remove the first N bases from the REF_allele where N = length(alt_allele)
                 //    Remove the first N bases from the Tumor_Seq_Allele1
                 //    Replace the alt_allele with "-"
-                //    Increment the start position by N
+                //    Increment the Start_Position by 1 (start position should be inclusive of the first base deleted)
+                //    Increment the End_Position by M-1 where M = length(ref_allele) (end position should be inclusive of the last base deleted)
                 finalOutMap.put("Reference_Allele", finalOutMap.get("Reference_Allele").substring(altAlleleLength));
                 finalOutMap.put("Tumor_Seq_Allele1", finalOutMap.get("Tumor_Seq_Allele1").substring(altAlleleLength));
                 finalOutMap.put("Tumor_Seq_Allele2", "-");
-                finalOutMap.put("Start_Position", String.valueOf(Integer.valueOf(finalOutMap.get("Start_Position")) + altAlleleLength));
+                finalOutMap.put("Start_Position", String.valueOf(Integer.valueOf(finalOutMap.get("Start_Position")) + 1));
+                finalOutMap.put("End_Position", String.valueOf(Integer.valueOf(finalOutMap.get("End_Position")) + refAlleleLength - 1));
             }
         }
 

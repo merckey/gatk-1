@@ -68,7 +68,7 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
 
         final ArrayList<Object[]> testCases = new ArrayList<>();
 
-        // TODO: Fix this set of tests!  THEY DON'T ALL PASS!
+        // TODO: Fix this set of tests!  THEY DON'T ALL PASS!  (Issue: https://github.com/broadinstitute/gatk/issues/4344)
         // VCF SNP / MNP / INDEL tests
 //        for ( final FuncotatorArgumentDefinitions.OutputFormatType outputFormatType : FuncotatorArgumentDefinitions.OutputFormatType.values() ) {
 //            for ( final SimpleKeyXsvFuncotationFactory.XsvDataKeyType keyType : SimpleKeyXsvFuncotationFactory.XsvDataKeyType.values() ) {
@@ -190,7 +190,7 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
         final long overallStartTime = System.nanoTime();
 
         final List<FuncotatorArgumentDefinitions.OutputFormatType> outFormatList = new ArrayList<>();
-        outFormatList.add(FuncotatorArgumentDefinitions.OutputFormatType.VCF);
+//        outFormatList.add(FuncotatorArgumentDefinitions.OutputFormatType.VCF);
         outFormatList.add(FuncotatorArgumentDefinitions.OutputFormatType.MAF);
 
         for ( final FuncotatorArgumentDefinitions.OutputFormatType outFormat : outFormatList) {
