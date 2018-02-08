@@ -319,6 +319,7 @@ public class MafOutputRenderer extends OutputRenderer {
             final int refAlleleLength = finalOutMap.get("Reference_Allele").length();
             final int altAlleleLength = finalOutMap.get("Tumor_Seq_Allele2").length();
 
+            // TODO: port these changes to GencodeFuncotationFactory (issue: https://github.com/broadinstitute/gatk/issues/4378)
             // Check to see if it's an insertion:
             if ( refAlleleLength < altAlleleLength ) {
                 // We must:
@@ -661,8 +662,8 @@ public class MafOutputRenderer extends OutputRenderer {
         outputFieldNameMap.put( "DNARepairGenes_Role",                  Arrays.asList("DNARepairGenes_Role", "HumanDNARepairGenes_Role") );
         outputFieldNameMap.put( "FamilialCancerDatabase_Syndromes",     Arrays.asList("FamilialCancerDatabase_Syndromes", "Familial_Cancer_Genes_Syndrome") );
         outputFieldNameMap.put( "MUTSIG_Published_Results",             Arrays.asList("MUTSIG_Published_Results", "MutSig Published Results_Published_Results") );
-        outputFieldNameMap.put( "OREGANNO_ID",                          Arrays.asList("OREGANNO_ID", "ORegAnno_ID") );
-        outputFieldNameMap.put( "OREGANNO_Values",                      Arrays.asList("OREGANNO_Values", "ORegAnno_Values") );
+        outputFieldNameMap.put( "OREGANNO_ID",                          Arrays.asList("OREGANNO_ID", "Oreganno_ID", "ORegAnno_ID") );
+        outputFieldNameMap.put( "OREGANNO_Values",                      Arrays.asList("OREGANNO_Values", "Oreganno_Values", "ORegAnno_Values") );
 
         outputFieldNameMap.put( "tumor_f",                              Arrays.asList("tumor_f", "sample_allelic_fraction", "AF") );
     }

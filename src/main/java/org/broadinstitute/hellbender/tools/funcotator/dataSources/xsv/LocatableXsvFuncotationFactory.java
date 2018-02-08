@@ -76,8 +76,14 @@ public class LocatableXsvFuncotationFactory extends DataSourceFuncotationFactory
     }
 
     public LocatableXsvFuncotationFactory(final String name, final String version){
+        this(name, version, new LinkedHashMap<>());
+    }
+
+    public LocatableXsvFuncotationFactory(final String name, final String version, final LinkedHashMap<String, String> annotationOverridesMap){
         this.name = name;
         this.version = version;
+
+        this.annotationOverrideMap = new LinkedHashMap<>(annotationOverridesMap);
     }
 
     @VisibleForTesting
@@ -87,7 +93,6 @@ public class LocatableXsvFuncotationFactory extends DataSourceFuncotationFactory
 
         supportedFieldNames = new LinkedHashSet<>(supportedFields);
         initializeFieldNameLists();
-
     }
 
     //==================================================================================================================
@@ -230,6 +235,10 @@ public class LocatableXsvFuncotationFactory extends DataSourceFuncotationFactory
 
                     // Initialize our field name lists:
                     initializeFieldNameLists();
+
+                    // Adjust the manual annotations to make sure we don't try to annotate any fields we aren't
+                    // responsible for:
+                    annotationOverrideMap.entrySet().removeIf( e -> !supportedFieldNames.contains(e.getKey()) );
                 }
             }
         }

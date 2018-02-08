@@ -61,6 +61,51 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
         return outputFile;
     }
 
+    private static void addManualAnnotationsToArguments(final List<String> arguments) {
+
+        // ================================================================================
+        // Annotation Defaults:
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("Center:The Broad Institute");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("dbSNP_RS:0");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
+        arguments.add("dbSNP_Val_Status:No Value");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
+        arguments.add("tumor_barcode:01100110011");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
+        arguments.add("Matched_Norm_Sample_Barcode:1001");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
+        arguments.add("Match_Norm_Seq_Allele1:No Match");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
+        arguments.add("Match_Norm_Seq_Allele2:Abnormal");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
+        arguments.add("Tumor_Validation_Allele1:Cancer Maybe");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
+        arguments.add("Tumor_Validation_Allele2:Maybe Cancer");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
+        arguments.add("Match_Norm_Validation_Allele1:Everythings fine here");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
+        arguments.add("Match_Norm_Validation_Allele2:How are you?");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
+        arguments.add("Verification_Status:Unverified");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
+        arguments.add("Validation_Status:Totally Valid.  100%  Definitely.");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
+        arguments.add("Mutation_Status:Mutated");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
+        arguments.add("Sequencing_Phase:90 Degrees");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
+        arguments.add("Sequence_Source:Mammal");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
+        arguments.add("Validation_Method:Eyeballed it.");
+
+        // ================================================================================
+        // Annotation Overrides:
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_OVERRIDES_LONG_NAME);
+        arguments.add("Oreganno_Build:BUILDED_GOOD_REAL_BIG");
+    }
+
     //==================================================================================================================
 
     @DataProvider
@@ -223,41 +268,6 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
 
             arguments.add("--" + FuncotatorArgumentDefinitions.ALLOW_HG19_GENCODE_B37_CONTIG_MATCHING_LONG_NAME);
 
-            arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
-            arguments.add("Center:The Broad Institute");
-            arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
-			arguments.add("dbSNP_RS:0");
-            arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-			arguments.add("dbSNP_Val_Status:No Value");
-            arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-			arguments.add("tumor_barcode:01100110011");
-            arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-			arguments.add("Matched_Norm_Sample_Barcode:1001");
-            arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-			arguments.add("Match_Norm_Seq_Allele1:No Match");
-            arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-			arguments.add("Match_Norm_Seq_Allele2:Abnormal");
-            arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-			arguments.add("Tumor_Validation_Allele1:Cancer Maybe");
-            arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-			arguments.add("Tumor_Validation_Allele2:Maybe Cancer");
-            arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-			arguments.add("Match_Norm_Validation_Allele1:Everythings fine here");
-            arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-			arguments.add("Match_Norm_Validation_Allele2:How are you?");
-            arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-			arguments.add("Verification_Status:Unverified");
-            arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-			arguments.add("Validation_Status:Totally Valid.  100%  Definitely.");
-            arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-			arguments.add("Mutation_Status:Mutated");
-            arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-			arguments.add("Sequencing_Phase:90 Degrees");
-            arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-			arguments.add("Sequence_Source:Mammal");
-            arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-			arguments.add("Validation_Method:Eyeballed it.");
-
             arguments.add("--" + FuncotatorArgumentDefinitions.REFERENCE_VERSION_LONG_NAME);
             arguments.add(FuncotatorArgumentDefinitions.ReferenceVersionType.hg19.toString());
             arguments.add("-" + StandardArgumentDefinitions.OUTPUT_SHORT_NAME);
@@ -265,6 +275,10 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
             arguments.add("-" + FuncotatorArgumentDefinitions.OUTPUT_FORMAT_LONG_NAME);
             arguments.add(outFormat.toString());
 
+            // Add our manual annotations to the arguments:
+            addManualAnnotationsToArguments(arguments);
+
+            // Run the tool with our args:
             runCommandLine(arguments);
 
             endTime = System.nanoTime();
@@ -317,7 +331,7 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
         arguments.add("GARBAGEDAY:SPUMONI");
 
         arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_OVERRIDES_LONG_NAME);
-        arguments.add("Gencode_hugoSymbol:Freddie Mercury");
+        arguments.add("Oreganno_Build:BUILDED_GOOD_REAL_BIG");
 
         // Run the beast:
         runCommandLine(arguments);
