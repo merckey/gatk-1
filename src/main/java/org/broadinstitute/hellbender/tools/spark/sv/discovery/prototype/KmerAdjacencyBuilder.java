@@ -242,7 +242,7 @@ public class KmerAdjacencyBuilder extends CommandLineProgram {
             for ( final Contig contig : contigs ) {
                 final int contigId = contig.getFirst().getContigId();
                 final int seqLen = contig.getSequence().length();
-                writer.write("S\t" + contigId + "\t" + contig.getSequence() + "\tLN:i:" + seqLen + "\n");
+                writer.write("S\ttig" + contigId + "\t" + contig.getSequence() + "\tLN:i:" + seqLen + "\n");
                 for ( final Connection connection : contig.getFirst().getConnections() ) {
                     final ContigEnd target = contigEnds.get(connection.getKmer());
                     if ( target.getContigId() >= contigId ) {
