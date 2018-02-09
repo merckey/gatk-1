@@ -396,11 +396,51 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
             }
         }
 
+        // TODO: This may not be correct.  It's not clear that the whole sequence should be taken.  Perhaps it should be handled with logic downstream...
+        // If no CDS was specified, we use the whole sequence:
+        if ( transcriptIdInfo.codingSequenceStart == 0 ) {
+            transcriptIdInfo.codingSequenceStart = 1;
+        }
+        if ( transcriptIdInfo.codingSequenceEnd == 0 ) {
+            transcriptIdInfo.codingSequenceEnd = sequence.getSequenceLength();
+        }
+
         transcriptIdInfo.mapKey = sequence.getSequenceName();
         transcriptIdInfo.has3pUtr = has3pUtr;
         transcriptIdInfo.has5pUtr = has5pUtr;
 
         return transcriptIdInfo;
+    }
+
+    /**
+     * Get the whole sequence from the GENCODE Transcript FASTA file for a given {@code transcriptId}.
+     * This will get ALL bases in the sequence of the given {@code transcriptId}, including any UTRs and the coding region.
+     * @param transcriptId The ID of the transcript to get from the FASTA file.
+     * @param transcriptIdMap A map from transcriptId to MappedTranscriptIdInfo, which tells us how to pull information for the given {@code transcriptId} out of the given {@code transcriptFastaReferenceDataSource}.
+     * @param transcriptFastaReferenceDataSource A {@link ReferenceDataSource} for the GENCODE transcript FASTA file.
+     * @return The whole sequence for the given {@code transcriptId} as represented in the GENCODE transcript FASTA file.
+     */
+    private static String getWholeSequenceFromTranscriptFasta( final String transcriptId,
+                                                                final Map<String, MappedTranscriptIdInfo> transcriptIdMap,
+                                                                final ReferenceDataSource transcriptFastaReferenceDataSource) {
+
+        final MappedTranscriptIdInfo transcriptMapIdAndMetadata = transcriptIdMap.get(transcriptId);
+
+        if ( transcriptMapIdAndMetadata == null ) {
+            throw new UserException.BadInput( "Unable to find the given Transcript ID in our transcript list (not in given transcript FASTA file): " + transcriptId );
+        }
+
+        int end = transcriptMapIdAndMetadata.fivePrimeUtrEnd;
+        end = transcriptMapIdAndMetadata.codingSequenceEnd > end ? transcriptMapIdAndMetadata.codingSequenceEnd : end;
+        end = transcriptMapIdAndMetadata.threePrimeUtrEnd > end ? transcriptMapIdAndMetadata.threePrimeUtrEnd : end;
+
+        final SimpleInterval transcriptInterval = new SimpleInterval(
+                transcriptMapIdAndMetadata.mapKey,
+                1,
+                end
+        );
+
+        return transcriptFastaReferenceDataSource.queryAndPrefetch( transcriptInterval ).getBaseString();
     }
 
     /**
@@ -428,6 +468,57 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
         );
 
         return transcriptFastaReferenceDataSource.queryAndPrefetch( transcriptInterval ).getBaseString();
+    }
+
+    /**
+     * Get the 5' UTR sequence from the GENCODE Transcript FASTA file for a given {@code transcriptId}.
+     * This will get ONLY the 5' UTR sequence for the given {@code transcriptId} and will NOT include the coding sequence or the 3' UTR.
+     * If the given transcript has no 5' UTR, this will return an empty {@link String}.
+     * @param transcriptId The ID of the transcript to get from the FASTA file.
+     * @param transcriptIdMap A map from transcriptId to MappedTranscriptIdInfo, which tells us how to pull information for the given {@code transcriptId} out of the given {@code transcriptFastaReferenceDataSource}.
+     * @param transcriptFastaReferenceDataSource A {@link ReferenceDataSource} for the GENCODE transcript FASTA file.
+     * @return The coding sequence for the given {@code transcriptId} as represented in the GENCODE transcript FASTA file, or an empty {@link String}.
+     */
+    private static String getFivePrimeUtrSequenceFromTranscriptFasta( final String transcriptId,
+                                                                      final Map<String, MappedTranscriptIdInfo> transcriptIdMap,
+                                                                      final ReferenceDataSource transcriptFastaReferenceDataSource) {
+        return getFivePrimeUtrSequenceFromTranscriptFasta(transcriptId, transcriptIdMap, transcriptFastaReferenceDataSource, 0);
+    }
+
+    /**
+     * Get the 5' UTR sequence from the GENCODE Transcript FASTA file for a given {@code transcriptId}.
+     * This will get ONLY the 5' UTR sequence for the given {@code transcriptId} and will NOT include the coding sequence or the 3' UTR.
+     * If the given transcript has no 5' UTR, this will return an empty {@link String}.
+     * @param transcriptId The ID of the transcript to get from the FASTA file.
+     * @param transcriptIdMap A map from transcriptId to MappedTranscriptIdInfo, which tells us how to pull information for the given {@code transcriptId} out of the given {@code transcriptFastaReferenceDataSource}.
+     * @param transcriptFastaReferenceDataSource A {@link ReferenceDataSource} for the GENCODE transcript FASTA file.
+     * @param extraBases The number of extra bases from the coding region to include in the results after the 5' UTR region.
+     * @return The coding sequence for the given {@code transcriptId} as represented in the GENCODE transcript FASTA file, or an empty {@link String}.
+     */
+    private static String getFivePrimeUtrSequenceFromTranscriptFasta( final String transcriptId,
+                                                                      final Map<String, MappedTranscriptIdInfo> transcriptIdMap,
+                                                                      final ReferenceDataSource transcriptFastaReferenceDataSource,
+                                                                      final int extraBases) {
+
+        final MappedTranscriptIdInfo transcriptMapIdAndMetadata = transcriptIdMap.get(transcriptId);
+
+        if ( transcriptMapIdAndMetadata == null ) {
+            throw new UserException.BadInput( "Unable to find the given Transcript ID in our transcript list (not in given transcript FASTA file): " + transcriptId );
+        }
+
+        if ( transcriptMapIdAndMetadata.has5pUtr ) {
+
+            final SimpleInterval transcriptInterval = new SimpleInterval(
+                    transcriptMapIdAndMetadata.mapKey,
+                    transcriptMapIdAndMetadata.fivePrimeUtrStart,
+                    transcriptMapIdAndMetadata.fivePrimeUtrEnd + extraBases
+            );
+
+            return transcriptFastaReferenceDataSource.queryAndPrefetch(transcriptInterval).getBaseString();
+        }
+        else {
+            return "";
+        }
     }
 
     /**
@@ -579,7 +670,7 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
             // Determine what kind of region we're in and handle it in it's own way:
             if ( containingSubfeature == null ) {
                 // We have an IGR variant
-                gencodeFuncotation = createIgrFuncotation(variant.getReference(), altAllele, reference);
+                gencodeFuncotation = createIgrFuncotation(variant, altAllele, reference);
             }
             else if ( GencodeGtfExonFeature.class.isAssignableFrom(containingSubfeature.getClass()) ) {
                 // We have a coding region variant
@@ -766,7 +857,7 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
 
             boolean foundStop = false;
 
-            for (int i = 0; i < sequenceComparison.getAlignedCodingSequenceAlternateAllele().length(); i+=3 ){
+            for (int i = 0; (i+3) < sequenceComparison.getAlignedCodingSequenceAlternateAllele().length(); i+=3 ){
                 final String codon = sequenceComparison.getAlignedCodingSequenceAlternateAllele().substring(i, i+3);
                 if (FuncotatorUtils.getEukaryoticAminoAcidByCodon(codon) == AminoAcid.STOP_CODON) {
                     foundStop = true;
@@ -944,18 +1035,22 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
             // Get our coding sequence for this region:
             final List<Locatable> activeRegions = Collections.singletonList(utr);
 
-            final String referenceCodingSequence =
-                    getCodingSequenceFromTranscriptFasta( transcript.getTranscriptId(), transcriptIdMap, transcriptFastaReferenceDataSource);
+            // Get the 5' UTR sequence here.
+            // Note: We grab 3 extra bases at the end (from the coding sequence) so that we can check for denovo starts
+            //       even if the variant occurs in the last base of the UTR.
+            final String fivePrimeUtrCodingSequence =
+                    getFivePrimeUtrSequenceFromTranscriptFasta( transcript.getTranscriptId(), transcriptIdMap, transcriptFastaReferenceDataSource, 3);
 
             final int codingStartPos = FuncotatorUtils.getStartPositionInTranscript(variant, activeRegions, strand);
 
             //Check for de novo starts:
-            if ( FuncotatorUtils.getEukaryoticAminoAcidByCodon(referenceCodingSequence.substring(codingStartPos, codingStartPos+3) )
+//             System.out.println(variant.getContig() + " " + variant.getStart() + " " + variant.getEnd() );
+            if ( FuncotatorUtils.getEukaryoticAminoAcidByCodon(fivePrimeUtrCodingSequence.substring(codingStartPos, codingStartPos+3) )
                     == AminoAcid.METHIONINE ) {
 
                 // We know we have a new start.
                 // Is it in frame or out of frame?
-                if ( FuncotatorUtils.isInFrameWithEndOfRegion(codingStartPos, referenceCodingSequence.length()) ) {
+                if ( FuncotatorUtils.isInFrameWithEndOfRegion(codingStartPos, fivePrimeUtrCodingSequence.length()) ) {
                     gencodeFuncotationBuilder.setVariantClassification(GencodeFuncotation.VariantClassification.DE_NOVO_START_IN_FRAME);
                 }
                 else {
@@ -1416,7 +1511,7 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
         boolean isBefore = true;
         if ( transcript.getGenomicStrand() == GencodeGtfFeature.GenomicStrand.FORWARD ) {
             for ( final GencodeGtfExonFeature exon : transcript.getExons() ) {
-                if ( exon.getStart() < utr.getStart()) {
+                if ( ((exon.getCds() != null) && (exon.getCds().getStart() < utr.getStart())) || (exon.getStart() < utr.getStart()) ) {
                     isBefore = false;
                     break;
                 }
@@ -1424,7 +1519,7 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
         }
         else {
             for ( final GencodeGtfExonFeature exon : transcript.getExons() ) {
-                if ( exon.getStart() > utr.getStart()) {
+                if ( ((exon.getCds() != null) && (exon.getCds().getStart() > utr.getStart())) || (exon.getStart() > utr.getStart()) ) {
                     isBefore = false;
                     break;
                 }
@@ -1516,7 +1611,7 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
         final List<GencodeFuncotation> gencodeFuncotations = new ArrayList<>();
 
         for ( final Allele altAllele : variant.getAlternateAlleles() ) {
-            gencodeFuncotations.add( createIgrFuncotation(variant.getReference(), altAllele, reference) );
+            gencodeFuncotations.add( createIgrFuncotation(variant, altAllele, reference) );
         }
 
         return gencodeFuncotations;
@@ -1556,12 +1651,12 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
      * Creates a {@link GencodeFuncotation}s based on the given {@link Allele} with type
      * {@link GencodeFuncotation.VariantClassification#IGR}.
      * Reports reference bases as if they are on the {@link Strand#POSITIVE} strand.
-     * @param refAllele The reference {@link Allele} to use for this {@link GencodeFuncotation}.
+     * @param variant The {@link VariantContext} associated with this annotation.
      * @param altAllele The alternate {@link Allele} to use for this {@link GencodeFuncotation}.
      * @param reference The {@link ReferenceContext} in which the given {@link Allele}s appear.
      * @return An IGR funcotation for the given allele.
      */
-    private GencodeFuncotation createIgrFuncotation(final Allele refAllele,
+    private GencodeFuncotation createIgrFuncotation(final VariantContext variant,
                                                     final Allele altAllele,
                                                     final ReferenceContext reference){
 
@@ -1571,12 +1666,12 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
         funcotationBuilder.setGcContent( calculateGcContent( reference, gcContentWindowSizeBases ) );
 
         funcotationBuilder.setVariantClassification( GencodeFuncotation.VariantClassification.IGR )
-                          .setRefAllele( refAllele )
+                          .setRefAllele( variant.getReference() )
                           .setStrand(Strand.POSITIVE)
-                          .setTumorSeqAllele1( refAllele.getBaseString() )
+                          .setTumorSeqAllele1( variant.getReference().getBaseString() )
                           .setTumorSeqAllele2( altAllele.getBaseString() );
 
-        final String referenceBases = FuncotatorUtils.getBasesInWindowAroundReferenceAllele(refAllele, altAllele, Strand.POSITIVE, referenceWindow, reference);
+        final String referenceBases = FuncotatorUtils.getBasesInWindowAroundReferenceAllele(variant.getReference(), altAllele, Strand.POSITIVE, referenceWindow, reference);
 
         // Set our reference context in the the FuncotatonBuilder:
         funcotationBuilder.setReferenceContext( referenceBases );

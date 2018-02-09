@@ -28,7 +28,7 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
 
     // Whether to do debug output (i.e. leave output around).
     // This should always be true when checked in.
-    private static final boolean doDebugTests = false;
+    private static final boolean doDebugTests = true;
 
     static {
         if ( !doDebugTests ) {
@@ -285,6 +285,61 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
 
             System.out.println("  Elapsed Time (" + outFormat.toString() + "): " + (endTime - startTime)/1e9 + "s");
         }
+
+        System.out.println("Total Elapsed Time: " + (endTime - overallStartTime)/1e9 + "s");
+    }
+
+    @Test(enabled = doDebugTests)
+    public void spotCheck2() throws IOException {
+
+        long startTime = 0, endTime = 0;
+        final long overallStartTime = System.nanoTime();
+
+//        final String inputFile = "/Users/jonn/Development/data_to_run/C828.TCGA-D3-A2JP-06A-11D-A19A-08.3-filtered.vcf";
+        final String inputFile = "/Users/jonn/Development/data_to_run/C828.TCGA-D3-A2JP-06A-11D-A19A-08.3-filtered.abridged.vcf";
+
+        startTime = System.nanoTime();
+
+        final File outputFile = new File(inputFile + ".maf.tsv");
+
+        final List<String> arguments = new ArrayList<>();
+
+        arguments.add("-" + StandardArgumentDefinitions.VARIANT_SHORT_NAME);
+        arguments.add(inputFile);
+
+        arguments.add("-" + StandardArgumentDefinitions.REFERENCE_SHORT_NAME);
+        arguments.add("/Users/jonn/Development/references/Homo_sapiens_assembly19.fasta");
+
+        arguments.add("--" + FuncotatorArgumentDefinitions.DATA_SOURCES_PATH_LONG_NAME);
+        arguments.add("/Users/jonn/Development/funcotator_dataSources.v1.1.20180208");
+
+        arguments.add("--" + FuncotatorArgumentDefinitions.ALLOW_HG19_GENCODE_B37_CONTIG_MATCHING_LONG_NAME);
+
+        arguments.add("--" + FuncotatorArgumentDefinitions.REFERENCE_VERSION_LONG_NAME);
+        arguments.add(FuncotatorArgumentDefinitions.ReferenceVersionType.hg19.toString());
+
+        arguments.add("-" + StandardArgumentDefinitions.OUTPUT_SHORT_NAME);
+        arguments.add(outputFile.getAbsolutePath());
+
+        arguments.add("-" + FuncotatorArgumentDefinitions.OUTPUT_FORMAT_LONG_NAME);
+        arguments.add(FuncotatorArgumentDefinitions.OutputFormatType.MAF.toString());
+
+
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("Center:broad.mit.edu");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("source:WES");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("normal_barcode:NORMAL_SAMPLE");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("tumor_barcode:TUMOR_SAMPLE");
+
+        // Run the tool with our args:
+        runCommandLine(arguments);
+
+        endTime = System.nanoTime();
+
+        System.out.println("  Elapsed Time (MAF): " + (endTime - startTime)/1e9 + "s");
 
         System.out.println("Total Elapsed Time: " + (endTime - overallStartTime)/1e9 + "s");
     }
