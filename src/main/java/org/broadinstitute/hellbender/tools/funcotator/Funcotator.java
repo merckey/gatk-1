@@ -251,6 +251,13 @@ public class Funcotator extends VariantWalker {
     // Optional args:
 
     @Argument(
+            fullName = FuncotatorArgumentDefinitions.IGNORE_FILTERED_VARIANTS_LONG_NAME,
+            optional = true,
+            doc = "Whether to ignore variants that have been filtered or to annotate them."
+    )
+    protected boolean ignoreFilteredVariants = FuncotatorArgumentDefinitions.IGNORE_FILTERED_VARIANTS_DEFFAULT_VALUE;
+
+    @Argument(
             fullName  = FuncotatorArgumentDefinitions.TRANSCRIPT_SELECTION_MODE_LONG_NAME,
             optional = true,
             doc = "Method of detailed transcript selection.  This will select the transcript for detailed annotation (CANONICAL or BEST_EFFECT)."
@@ -422,6 +429,13 @@ public class Funcotator extends VariantWalker {
      * @param featureContext {@link FeatureContext} corresponding to the given {@code variant}.
      */
     private void enqueueAndHandleVariant(final VariantContext variant, final ReferenceContext referenceContext, final FeatureContext featureContext) {
+
+        //TODO: Check against Issue #4358.
+        // Check to see if we're annotating filtered variants and ignore this if we're told to:
+        if ( ignoreFilteredVariants && variant.isFiltered() ) {
+            // We can ignore this variant since it was filtered out.
+            return;
+        }
 
         // Get our feature inputs:
         final List<Feature> featureList = new ArrayList<>();

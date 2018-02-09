@@ -324,6 +324,8 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
         arguments.add("-" + FuncotatorArgumentDefinitions.OUTPUT_FORMAT_LONG_NAME);
         arguments.add(FuncotatorArgumentDefinitions.OutputFormatType.MAF.toString());
 
+        arguments.add("--" + FuncotatorArgumentDefinitions.IGNORE_FILTERED_VARIANTS_LONG_NAME);
+
 
         arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
         arguments.add("Center:broad.mit.edu");

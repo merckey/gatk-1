@@ -25,6 +25,9 @@ public class FuncotatorArgumentDefinitions {
     // ------------------------------------------------------------
     // Definitions for optional arguments:
 
+    public static final String IGNORE_FILTERED_VARIANTS_LONG_NAME = "ignore-filtered-variants";
+    public static final boolean IGNORE_FILTERED_VARIANTS_DEFFAULT_VALUE = false;
+
     public static final String TRANSCRIPT_SELECTION_MODE_LONG_NAME = "transcript-selection-mode";
     public static final TranscriptSelectionMode TRANSCRIPT_SELECTION_MODE_DEFAULT_VALUE = TranscriptSelectionMode.CANONICAL;
 

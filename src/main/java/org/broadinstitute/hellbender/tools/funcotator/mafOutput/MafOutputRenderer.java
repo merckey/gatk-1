@@ -236,13 +236,6 @@ public class MafOutputRenderer extends OutputRenderer {
     @Override
     public void write(final VariantContext variant, final List<Funcotation> funcotations) {
 
-        // Make sure we only output the variant here if it passed all filters:
-        //TODO: Make this an option (Issue #4358).
-        if ( variant.isFiltered() ) {
-            // We can ignore this variant since it was filtered out.
-            return;
-        }
-
         // Loop through each alt allele in our variant:
         for ( final Allele altAllele : variant.getAlternateAlleles() ) {
 
