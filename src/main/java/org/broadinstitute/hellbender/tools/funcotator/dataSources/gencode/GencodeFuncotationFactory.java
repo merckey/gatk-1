@@ -1669,7 +1669,9 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
                           .setRefAllele( variant.getReference() )
                           .setStrand(Strand.POSITIVE)
                           .setTumorSeqAllele1( variant.getReference().getBaseString() )
-                          .setTumorSeqAllele2( altAllele.getBaseString() );
+                          .setTumorSeqAllele2( altAllele.getBaseString() )
+                          .setStart(variant.getStart())
+                          .setEnd(variant.getEnd());
 
         final String referenceBases = FuncotatorUtils.getBasesInWindowAroundReferenceAllele(variant.getReference(), altAllele, Strand.POSITIVE, referenceWindow, reference);
 
