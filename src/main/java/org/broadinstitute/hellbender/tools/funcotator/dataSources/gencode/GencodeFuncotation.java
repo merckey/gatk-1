@@ -752,59 +752,63 @@ public class GencodeFuncotation implements Funcotation {
      *     https://gatkforums.broadinstitute.org/gatk/discussion/8815/oncotator-variant-classification-and-secondary-variant-classification
      */
     public enum VariantClassification {
+
+        /** Variant classification could not be determined. */
+        COULD_NOT_DETERMINE("",99),
+
         // Only for Introns:
         /** Variant lies between exons within the bounds of the chosen transcript. */
-        INTRON(10),
+        INTRON("INTRON", 10),
 
         // Only for UTRs:
         /** Variant is on the 5'UTR for the chosen transcript. */
-        FIVE_PRIME_UTR(6),
+        FIVE_PRIME_UTR("FIVE_PRIME_UTR", 6),
         /** Variant is on the 3'UTR for the chosen transcript */
-        THREE_PRIME_UTR(6),
+        THREE_PRIME_UTR("THREE_PRIME_UTR", 6),
 
         // Only for IGRs:
         /** Intergenic region. Does not overlap any transcript. */
-        IGR(20),
+        IGR("IGR", 20),
         /** The variant is upstream of the chosen transcript (within 3kb) */
-        FIVE_PRIME_FLANK(15),
+        FIVE_PRIME_FLANK("FIVE_PRIME_FLANK", 15),
 
         // These can be in Coding regions or Introns (only SPLICE_SITE):
         /** The point mutation alters the protein structure by one amino acid. */
-        MISSENSE(1),
+        MISSENSE("MISSENSE", 1),
         /** A premature stop codon is created by the variant. */
-        NONSENSE(0),
+        NONSENSE("NONSENSE", 0),
         /** Variant removes stop codon. */
-        NONSTOP(0),
+        NONSTOP("NONSTOP", 0),
         /** Variant is in coding region of the chosen transcript, but protein structure is identical (i.e. a synonymous mutation). */
-        SILENT(5),
+        SILENT("SILENT", 5),
         /** The variant is within a configurable number of bases (default=2) of a splice site. See the secondary classification to determine if it lies on the exon or intron side. */
-        SPLICE_SITE(4),
+        SPLICE_SITE("SPLICE_SITE", 4),
         /** Deletion that keeps the sequence in frame (i.e. deletion of a length evenly divisible by 3). */
-        IN_FRAME_DEL(1),
+        IN_FRAME_DEL("IN_FRAME_DEL", 1),
         /** Insertion that keeps the sequence in frame (i.e. insertion of a length evenly divisible by 3). */
-        IN_FRAME_INS(1),
+        IN_FRAME_INS("IN_FRAME_INS", 1),
         /** Insertion that moves the coding sequence out of frame (i.e. insertion of a length not evenly divisible by 3). */
-        FRAME_SHIFT_INS(2),
+        FRAME_SHIFT_INS("FRAME_SHIFT_INS", 2),
         /** Deletion that moves the sequence out of frame (i.e. deletion of a length not evenly divisible by 3). */
-        FRAME_SHIFT_DEL(2),
+        FRAME_SHIFT_DEL("FRAME_SHIFT_DEL", 2),
         /** Point mutation that overlaps the start codon. */
-        START_CODON_SNP(3),
+        START_CODON_SNP("START_CODON_SNP", 3),
         /** Insertion that overlaps the start codon. */
-        START_CODON_INS(3),
+        START_CODON_INS("START_CODON_INS", 3),
         /** Deletion that overlaps the start codon. */
-        START_CODON_DEL(3),
+        START_CODON_DEL("START_CODON_DEL", 3),
 
         // These can only be in 5' UTRs:
         /** New start codon is created by the given variant using the chosen transcript. However, it is in frame relative to the coded protein. */
-        DE_NOVO_START_IN_FRAME(1),
+        DE_NOVO_START_IN_FRAME("DE_NOVO_START_IN_FRAME", 1),
         /** New start codon is created by the given variant using the chosen transcript. However, it is out of frame relative to the coded protein. */
-        DE_NOVO_START_OUT_FRAME(0),
+        DE_NOVO_START_OUT_FRAME("DE_NOVO_START_OUT_FRAME", 0),
 
         // These are special / catch-all cases:
         /** Variant lies on one of the RNA transcripts. */
-        RNA(4),
+        RNA("RNA", 4),
         /** Variant lies on one of the lincRNAs. */
-        LINCRNA(4);
+        LINCRNA("LINCRNA", 4);
 
         /**
          * The relative severity of each {@link VariantClassification}.
@@ -813,7 +817,11 @@ public class GencodeFuncotation implements Funcotation {
          */
         final private int relativeSeverity;
 
-        VariantClassification(final int sev) {
+        /** The serialized version of this {@link VariantClassification} */
+        final private String serialized;
+
+        VariantClassification(final String serialized, final int sev) {
+            this.serialized = serialized;
             relativeSeverity = sev;
         }
 
@@ -821,5 +829,10 @@ public class GencodeFuncotation implements Funcotation {
          * @return The {@link VariantClassification#relativeSeverity} of {@code this} {@link VariantClassification}.
          */
         public int getSeverity() { return relativeSeverity; }
+
+        @Override
+        public String toString() {
+            return serialized;
+        }
     }
 }

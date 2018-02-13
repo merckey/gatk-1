@@ -179,6 +179,10 @@ public class SequenceComparison {
 
     // =============================================================================================================
 
+    public boolean hasSequenceInfo() {
+        return this.transcriptCodingSequence != null;
+    }
+
     public String getReferenceBases() {
         return referenceBases;
     }

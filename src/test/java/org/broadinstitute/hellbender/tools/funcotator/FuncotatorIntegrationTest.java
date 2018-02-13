@@ -66,39 +66,50 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
         // ================================================================================
         // Annotation Defaults:
         arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
-        arguments.add("Center:The Broad Institute");
-        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
         arguments.add("dbSNP_RS:0");
         arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
         arguments.add("dbSNP_Val_Status:No Value");
-        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-        arguments.add("tumor_barcode:01100110011");
-        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-        arguments.add("Matched_Norm_Sample_Barcode:1001");
-        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-        arguments.add("Match_Norm_Seq_Allele1:No Match");
-        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-        arguments.add("Match_Norm_Seq_Allele2:Abnormal");
-        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-        arguments.add("Tumor_Validation_Allele1:Cancer Maybe");
-        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-        arguments.add("Tumor_Validation_Allele2:Maybe Cancer");
-        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-        arguments.add("Match_Norm_Validation_Allele1:Everythings fine here");
-        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-        arguments.add("Match_Norm_Validation_Allele2:How are you?");
-        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-        arguments.add("Verification_Status:Unverified");
-        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-        arguments.add("Validation_Status:Totally Valid.  100%  Definitely.");
-        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-        arguments.add("Mutation_Status:Mutated");
-        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-        arguments.add("Sequencing_Phase:90 Degrees");
-        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-        arguments.add("Sequence_Source:Mammal");
-        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME );
-        arguments.add("Validation_Method:Eyeballed it.");
+
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("Center:broad.mit.edu");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("source:WES");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("normal_barcode:normal_sample");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("tumor_barcode:tumor_sample");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("NCBI_Build:37");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("Strand:+");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("status:Somatic");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("phase:Phase_I");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("sequencer:Illumina");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("Tumor_Validation_Allele1:");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("Tumor_Validation_Allele2:");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("Match_Norm_Validation_Allele1:");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("Match_Norm_Validation_Allele2:");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("Verification_Status:");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("Validation_Status:");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("Validation_Method:");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("Score:");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("BAM_file:");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("Match_Norm_Seq_Allele1:");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("Match_Norm_Seq_Allele2:");
 
         // ================================================================================
         // Annotation Overrides:
@@ -296,11 +307,11 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
         final long overallStartTime = System.nanoTime();
 
 //        final String inputFile = "/Users/jonn/Development/data_to_run/C828.TCGA-D3-A2JP-06A-11D-A19A-08.3-filtered.vcf";
-        final String inputFile = "/Users/jonn/Development/data_to_run/C828.TCGA-D3-A2JP-06A-11D-A19A-08.3-filtered.abridged.vcf";
+        final String inputFile = "/Users/jonn/Development/data_to_run/C828.TCGA-D3-A2JP-06A-11D-A19A-08.3-filtered.badRecord.vcf";
 
         startTime = System.nanoTime();
 
-        final File outputFile = new File(inputFile + ".maf.tsv");
+        final File outputFile = new File(inputFile + ".funcotator.maf.tsv");
 
         final List<String> arguments = new ArrayList<>();
 
@@ -326,15 +337,46 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
 
         arguments.add("--" + FuncotatorArgumentDefinitions.IGNORE_FILTERED_VARIANTS_LONG_NAME);
 
-
         arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
-        arguments.add("Center:broad.mit.edu");
+		arguments.add("Center:broad.mit.edu");
         arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
-        arguments.add("source:WES");
+		arguments.add("source:WES");
         arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
-        arguments.add("normal_barcode:NORMAL_SAMPLE");
+		arguments.add("normal_barcode:normal_sample");
         arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
-        arguments.add("tumor_barcode:TUMOR_SAMPLE");
+		arguments.add("tumor_barcode:tumor_sample");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+		arguments.add("NCBI_Build:37");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+		arguments.add("Strand:+");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+		arguments.add("status:Somatic");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+		arguments.add("phase:Phase_I");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+		arguments.add("sequencer:Illumina");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+		arguments.add("Tumor_Validation_Allele1:");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+		arguments.add("Tumor_Validation_Allele2:");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+		arguments.add("Match_Norm_Validation_Allele1:");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+		arguments.add("Match_Norm_Validation_Allele2:");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+		arguments.add("Verification_Status:");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+		arguments.add("Validation_Status:");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+		arguments.add("Validation_Method:");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+		arguments.add("Score:");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+		arguments.add("BAM_file:");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+		arguments.add("Match_Norm_Seq_Allele1:");
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+		arguments.add("Match_Norm_Seq_Allele2:");
 
         // Run the tool with our args:
         runCommandLine(arguments);

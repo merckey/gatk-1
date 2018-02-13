@@ -897,7 +897,8 @@ public class GencodeFuncotationFactoryUnitTest extends GATKBaseTest {
                         transcript,
                         exonPositionList,
                         muc16TranscriptIdMap,
-                        muc16TranscriptDataSource);
+                        muc16TranscriptDataSource,
+                        true);
 
         final GencodeFuncotation.VariantClassification varClass = GencodeFuncotationFactory.createVariantClassification(
                 variantContext,
