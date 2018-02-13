@@ -1452,6 +1452,8 @@ public final class FuncotatorUtils {
                                                                 final Strand strand,
                                                                 final int referenceWindowInBases,
                                                                 final ReferenceContext referenceContext) {
+        // TODO: This is generating too long a string for INDELs because of VCF format alleles - see Issue #4407
+
         Utils.nonNull( refAllele );
         Utils.nonNull( altAllele );
         assertValidStrand( strand );

@@ -345,7 +345,7 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
 		arguments.add("normal_barcode:normal_sample");
         arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
 		arguments.add("tumor_barcode:tumor_sample");
-        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
+        arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_OVERRIDES_LONG_NAME);
 		arguments.add("NCBI_Build:37");
         arguments.add("--" + FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME);
 		arguments.add("Strand:+");

@@ -717,10 +717,16 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
         final SequenceComparison sequenceComparison = createSequenceComparison(variant, altAllele, reference, transcript, exonPositionList, transcriptIdMap, transcriptFastaReferenceDataSource, false);
 
         // Set the reference context with the bases from the sequence comparison
+        // NOTE: The reference context is ALWAYS from the + strand, so we need to reverse our bases back in the - case:
+        if ( sequenceComparison.getStrand() == Strand.POSITIVE ) {
+            gencodeFuncotationBuilder.setReferenceContext(sequenceComparison.getReferenceBases());
+        }
+        else {
+            gencodeFuncotationBuilder.setReferenceContext(ReadUtils.getBasesReverseComplement(sequenceComparison.getReferenceBases().getBytes()));
+        }
         // Set the GC content
         // Set the cDNA change:
-        gencodeFuncotationBuilder.setReferenceContext(sequenceComparison.getReferenceBases())
-                .setGcContent(sequenceComparison.getGcContent())
+        gencodeFuncotationBuilder.setGcContent(sequenceComparison.getGcContent())
                 .setcDnaChange(FuncotatorUtils.getCodingSequenceChangeString(sequenceComparison));
 
         // Set the VariantClassification through a simple equivalency on the gene type (since we have no transcript info):
@@ -771,10 +777,17 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
         final SequenceComparison sequenceComparison = createSequenceComparison(variant, altAllele, reference, transcript, exonPositionList, transcriptIdMap, transcriptFastaReferenceDataSource, true);
 
         // Set the reference context with the bases from the sequence comparison
+        // NOTE: The reference context is ALWAYS from the + strand, so we need to reverse our bases back in the - case:
+        if ( sequenceComparison.getStrand() == Strand.POSITIVE ) {
+            gencodeFuncotationBuilder.setReferenceContext(sequenceComparison.getReferenceBases());
+        }
+        else {
+            gencodeFuncotationBuilder.setReferenceContext(ReadUtils.getBasesReverseComplement(sequenceComparison.getReferenceBases().getBytes()));
+        }
+
         // Set the GC content
         // Set the cDNA change:
-        gencodeFuncotationBuilder.setReferenceContext(sequenceComparison.getReferenceBases())
-                .setGcContent(sequenceComparison.getGcContent())
+        gencodeFuncotationBuilder.setGcContent(sequenceComparison.getGcContent())
                 .setcDnaChange(FuncotatorUtils.getCodingSequenceChangeString(sequenceComparison));
 
         //==============================================================================================================
@@ -1063,7 +1076,13 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
         final String referenceBases = FuncotatorUtils.getBasesInWindowAroundReferenceAllele(strandCorrectedRefAllele, strandCorrectedAltAllele, strand, referenceWindow, reference);
 
         // Set our reference sequence in the Gencode Funcotation Builder:
-        gencodeFuncotationBuilder.setReferenceContext( referenceBases );
+        // NOTE: The reference context is ALWAYS from the + strand, so we need to reverse our bases back in the - case:
+        if ( strand == Strand.POSITIVE ) {
+            gencodeFuncotationBuilder.setReferenceContext(referenceBases);
+        }
+        else {
+            gencodeFuncotationBuilder.setReferenceContext(ReadUtils.getBasesReverseComplement(referenceBases.getBytes()));
+        }
 
         // Set whether it's the 5' or 3' UTR:
         if ( is5PrimeUtr(utr, transcript) ) {
@@ -1083,7 +1102,6 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
             final int codingStartPos = FuncotatorUtils.getStartPositionInTranscript(variant, activeRegions, strand);
 
             //Check for de novo starts:
-//             System.out.println(variant.getContig() + " " + variant.getStart() + " " + variant.getEnd() );
             if ( FuncotatorUtils.getEukaryoticAminoAcidByCodon(fivePrimeUtrCodingSequence.substring(codingStartPos, codingStartPos+3) )
                     == AminoAcid.METHIONINE ) {
 
@@ -1152,10 +1170,21 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
         final String referenceBases = FuncotatorUtils.getBasesInWindowAroundReferenceAllele(strandCorrectedRefAllele, strandCorrectedAltAllele, strand, referenceWindow, referenceContext);
 
         // Set our reference sequence in the Gencode Funcotation Builder:
-        gencodeFuncotationBuilder.setReferenceContext( referenceBases );
+        // NOTE: The reference context is ALWAYS from the + strand, so we need to reverse our bases back in the - case:
+        if ( strand == Strand.POSITIVE ) {
+            gencodeFuncotationBuilder.setReferenceContext(referenceBases);
+        }
+        else {
+            gencodeFuncotationBuilder.setReferenceContext(ReadUtils.getBasesReverseComplement(referenceBases.getBytes()));
+        }
 
-        // Set as default INTRON variant classification:
-        gencodeFuncotationBuilder.setVariantClassification(GencodeFuncotation.VariantClassification.INTRON);
+        // Set the VariantClassification:
+        if ( gtfFeature.getGeneType() == GencodeGtfFeature.GeneTranscriptType.PROTEIN_CODING ) {
+            gencodeFuncotationBuilder.setVariantClassification(GencodeFuncotation.VariantClassification.INTRON);
+        }
+        else {
+            gencodeFuncotationBuilder.setVariantClassification(convertGeneTranscriptTypeToVariantClassification(gtfFeature.getGeneType()));
+        }
 
         // Set GC Content:
         gencodeFuncotationBuilder.setGcContent( calculateGcContent( reference, gcContentWindowSizeBases ) );
@@ -1518,6 +1547,8 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
                                                                                                         final GencodeGtfGeneFeature gtfFeature,
                                                                                                         final GencodeGtfTranscriptFeature transcript) {
 
+         //TODO: Add gtfFeature.getGeneType() as an annotation field in the GencodeFuncotation - Issue #4408
+
          final GencodeFuncotationBuilder gencodeFuncotationBuilder = new GencodeFuncotationBuilder();
          final Strand strand = Strand.decode(transcript.getGenomicStrand().toString());
 
@@ -1645,7 +1676,7 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
      */
     private void sortFuncotationsByTranscriptForOutput( final List<GencodeFuncotation> funcotationList ) {
         //TODO: Make this sort go from "worst" -> "best" so we can just pop the last element off and save some time.
-
+        //TODO: Make the Comparator object a private instance variable.
         if ( transcriptSelectionMode == FuncotatorArgumentDefinitions.TranscriptSelectionMode.BEST_EFFECT ) {
             funcotationList.sort(new BestEffectGencodeFuncotationComparator(userRequestedTranscripts));
         }
@@ -1810,7 +1841,8 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
      * @return A {@link org.broadinstitute.hellbender.tools.funcotator.dataSources.gencode.GencodeFuncotation.VariantClassification} representing the given {@link org.broadinstitute.hellbender.utils.codecs.gencode.GencodeGtfFeature.GeneTranscriptType}, or {@code null}.
      */
     private static GencodeFuncotation.VariantClassification convertGeneTranscriptTypeToVariantClassification (final GencodeGtfFeature.GeneTranscriptType type ) {
-        
+
+        //TODO: This all needs to be fixed so there is a 1:1 mapping of GeneTranscriptType->VariantClassification - Issue #4405
         switch (type) {
 //             case IG_C_GENE:				            break;
 //             case IG_D_GENE:				            break;
@@ -1878,7 +1910,6 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
              case VAULTRNA:					            return GencodeFuncotation.VariantClassification.RNA;
              case BIDIRECTIONAL_PROMOTER_LNCRNA:	    return GencodeFuncotation.VariantClassification.RNA;
              default:
-                 //TODO: This all needs to be fixed so there is a 1:1 mapping of GeneTranscriptType->VariantClassification - Issue #4405
                 return GencodeFuncotation.VariantClassification.RNA;
         }
     }

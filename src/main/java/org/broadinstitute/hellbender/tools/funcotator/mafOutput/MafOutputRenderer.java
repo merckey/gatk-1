@@ -102,6 +102,9 @@ public class MafOutputRenderer extends OutputRenderer {
      */
     private final VCFHeader inputFileHeader;
 
+    /** Override annotation list from the user. */
+    private final LinkedHashMap<String, String> overrideAnnotations;
+
     //==================================================================================================================
     // Constructors:
 
@@ -141,14 +144,14 @@ public class MafOutputRenderer extends OutputRenderer {
         this.inputFileHeader = inputFileHeader;
         dataSourceFactories = dataSources;
 
-        // Merge the annotations into our manualAnnotations:
+        // Merge the default annotations into our manualAnnotations:
         manualAnnotations = new LinkedHashMap<>();
         if ( unaccountedForDefaultAnnotations != null ) {
             manualAnnotations.putAll(unaccountedForDefaultAnnotations);
         }
-        if ( unaccountedForOverrideAnnotations != null ) {
-            manualAnnotations.putAll(unaccountedForOverrideAnnotations);
-        }
+
+        // Handle our override annotations a little differently:
+        this.overrideAnnotations = unaccountedForOverrideAnnotations;
 
         // Fill in our default output map:
         initializeDefaultMapWithKeys();
@@ -252,6 +255,9 @@ public class MafOutputRenderer extends OutputRenderer {
                     }
                 }
             }
+
+            // Now add in our annotation overrides so they can be aliased correctly with the outputFieldNameMap:
+            extraFieldOutputMap.putAll(overrideAnnotations);
 
             // Go through all output fields and see if any of the names in the value list are in our extraFieldOutputMap.
             // For any that match, we remove them from our extraFieldOutputMap and add them to the outputMap with the
