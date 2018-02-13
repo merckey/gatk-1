@@ -1714,22 +1714,28 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
 
         final StringBuilder condensedFuncotationStringBuilder = new StringBuilder();
 
-        if ( !funcotation.getVariantClassification().equals(GencodeFuncotation.VariantClassification.IGR) ) {
-            condensedFuncotationStringBuilder.append(funcotation.getHugoSymbol());
-            condensedFuncotationStringBuilder.append("_");
-            condensedFuncotationStringBuilder.append(funcotation.getAnnotationTranscript());
-            condensedFuncotationStringBuilder.append("_");
-            condensedFuncotationStringBuilder.append(funcotation.getVariantClassification());
-
-            if ( !(funcotation.getVariantClassification().equals(GencodeFuncotation.VariantClassification.INTRON ) ||
-                    ((funcotation.getSecondaryVariantClassification() != null) && funcotation.getSecondaryVariantClassification().equals(GencodeFuncotation.VariantClassification.INTRON))) ) {
-                condensedFuncotationStringBuilder.append("_");
-                condensedFuncotationStringBuilder.append(funcotation.getProteinChange());
-            }
+        if ( funcotation.getVariantClassification() == null ) {
+            //TODO: This is Issue #4410
+            condensedFuncotationStringBuilder.append(funcotation.getVariantType().toString() + "_ANNOTATION");
         }
         else {
-            //TODO: This is known issue #3849:
-            condensedFuncotationStringBuilder.append("IGR_ANNOTATON");
+            if ( !funcotation.getVariantClassification().equals(GencodeFuncotation.VariantClassification.IGR) ) {
+                condensedFuncotationStringBuilder.append(funcotation.getHugoSymbol());
+                condensedFuncotationStringBuilder.append("_");
+                condensedFuncotationStringBuilder.append(funcotation.getAnnotationTranscript());
+                condensedFuncotationStringBuilder.append("_");
+                condensedFuncotationStringBuilder.append(funcotation.getVariantClassification());
+
+                if ( !(funcotation.getVariantClassification().equals(GencodeFuncotation.VariantClassification.INTRON) ||
+                        ((funcotation.getSecondaryVariantClassification() != null) && funcotation.getSecondaryVariantClassification().equals(GencodeFuncotation.VariantClassification.INTRON))) ) {
+                    condensedFuncotationStringBuilder.append("_");
+                    condensedFuncotationStringBuilder.append(funcotation.getProteinChange());
+                }
+            }
+            else {
+                //TODO: This is known issue #3849:
+                condensedFuncotationStringBuilder.append("IGR_ANNOTATON");
+            }
         }
         return condensedFuncotationStringBuilder.toString();
     }
@@ -1940,6 +1946,17 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
                 return 1;
             }
 
+            // Sanity check if we don't have a variant classification here:
+            if ( (a.getVariantClassification() == null) && (b.getVariantClassification() == null) ) {
+                return -1;
+            }
+            else if ( a.getVariantClassification() == null ) {
+                return 1;
+            }
+            else if ( b.getVariantClassification() == null ) {
+                return -1;
+            }
+
             // 1.5)
             // Check to see if one is an IGR.  IGR's have only a subset of the information in them, so it's easier to
             // order them if they're IGRs:
@@ -2037,6 +2054,17 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
             }
             else if ( (!isFuncotationInTranscriptList(a, userRequestedTranscripts)) && isFuncotationInTranscriptList(b, userRequestedTranscripts) ) {
                 return 1;
+            }
+
+            // Sanity check if we don't have a variant classification here:
+            if ( (a.getVariantClassification() == null) && (b.getVariantClassification() == null) ) {
+                return -1;
+            }
+            else if ( a.getVariantClassification() == null ) {
+                return 1;
+            }
+            else if ( b.getVariantClassification() == null ) {
+                return -1;
             }
 
             // 2)
