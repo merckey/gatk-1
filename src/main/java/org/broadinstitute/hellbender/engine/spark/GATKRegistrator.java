@@ -3,7 +3,7 @@ package org.broadinstitute.hellbender.engine.spark;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.serializers.FieldSerializer;
 import de.javakaffee.kryoserializers.UnmodifiableCollectionsSerializer;
-import htsjdk.samtools.SAMRecord;
+import htsjdk.samtools.*;
 import org.apache.spark.serializer.KryoRegistrator;
 import org.bdgenomics.adam.serialization.ADAMKryoRegistrator;
 import org.broadinstitute.hellbender.utils.read.SAMRecordToGATKReadAdapter;
@@ -43,6 +43,12 @@ public class GATKRegistrator implements KryoRegistrator {
         kryo.register(SAMRecordToGATKReadAdapter.class, new SAMRecordToGATKReadAdapterSerializer());
 
         kryo.register(SAMRecord.class, new SAMRecordSerializer());
+        kryo.register(BAMRecord.class, new SAMRecordSerializer());
+        kryo.register(SAMFileHeader.GroupOrder.class);
+        kryo.register(SAMFileHeader.class);
+        kryo.register(SAMProgramRecord.class);
+        kryo.register(SAMReadGroupRecord.class);
+        kryo.register(SAMFileHeader.SortOrder.class);
 
         //register to avoid writing the full name of this class over and over
         kryo.register(PairedEnds.class, new FieldSerializer<>(kryo, PairedEnds.class));
