@@ -16,6 +16,7 @@ import org.broadinstitute.hellbender.tools.funcotator.dataSources.TableFuncotati
 import org.broadinstitute.hellbender.tools.funcotator.dataSources.gencode.GencodeFuncotation;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.Utils;
+import org.sqlite.SQLiteConfig;
 
 import java.nio.file.Path;
 import java.sql.*;
@@ -134,8 +135,14 @@ public class CosmicFuncotationFactory extends DataSourceFuncotationFactory {
         // Connect to the DB:
         try {
             Class.forName("org.sqlite.JDBC");
+
+            // Set our configuration options for the connection here:
+            final SQLiteConfig config = new SQLiteConfig();
+            // We only want to read from the DB:
+            config.setReadOnly(true);
+
             logger.debug("Connecting to SQLite database at: " + pathToCosmicDb.toUri().toString());
-            dbConnection = DriverManager.getConnection("jdbc:sqlite:" + pathToCosmicDb.toUri().toString());
+            dbConnection = DriverManager.getConnection("jdbc:sqlite:" + pathToCosmicDb.toUri().toString(), config.toProperties());
             logger.debug("Connected to SQLite database!");
         }
         catch (final SQLException ex) {

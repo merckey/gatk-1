@@ -173,7 +173,7 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
                 testCases.add(
                         new Object[]{
                                 FuncotatorTestConstants.FUNCOTATOR_DATA_SOURCES_MAIN_FOLDER,
-                                FuncotatorArgumentDefinitions.ReferenceVersionType.hg19,
+                                "hg19",
                                 FuncotatorTestConstants.HG19_CHR3_REFERENCE_FILE_NAME,
                                 FuncotatorTestConstants.VARIANT_FILE_HG19_CHR3,
                                 FuncotatorTestConstants.PIK3CA_TRANSCRIPT,
@@ -185,7 +185,7 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
                 testCases.add(
                         new Object[]{
                                 FuncotatorTestConstants.FUNCOTATOR_DATA_SOURCES_MAIN_FOLDER,
-                                FuncotatorArgumentDefinitions.ReferenceVersionType.hg19,
+                                "hg19",
                                 FuncotatorTestConstants.HG19_CHR19_REFERENCE_FILE_NAME,
                                 FuncotatorTestConstants.VARIANT_FILE_HG19_CHR19,
                                 FuncotatorTestConstants.MUC16_TRANSCRIPT,
@@ -211,7 +211,7 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
 
     @Test(dataProvider = "provideForIntegrationTest")
     public void testFuncotatorWithoutValidatingResults(final String dataSourcesPath,
-                                final FuncotatorArgumentDefinitions.ReferenceVersionType refVer,
+                                final String refVer,
                                 final String referenceFileName,
                                 final String variantFileName,
                                 final String transcriptName,
@@ -226,7 +226,7 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
         arguments.add("--" + FuncotatorArgumentDefinitions.DATA_SOURCES_PATH_LONG_NAME);
         arguments.add(dataSourcesPath);
         arguments.add("--" + FuncotatorArgumentDefinitions.REFERENCE_VERSION_LONG_NAME);
-        arguments.add(refVer.toString());
+        arguments.add(refVer);
         arguments.add("-" + StandardArgumentDefinitions.REFERENCE_SHORT_NAME);
         arguments.add(referenceFileName);
         arguments.add("-" + StandardArgumentDefinitions.VARIANT_SHORT_NAME);
@@ -280,7 +280,7 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
             arguments.add("--" + FuncotatorArgumentDefinitions.ALLOW_HG19_GENCODE_B37_CONTIG_MATCHING_LONG_NAME);
 
             arguments.add("--" + FuncotatorArgumentDefinitions.REFERENCE_VERSION_LONG_NAME);
-            arguments.add(FuncotatorArgumentDefinitions.ReferenceVersionType.hg19.toString());
+            arguments.add("hg19");
             arguments.add("-" + StandardArgumentDefinitions.OUTPUT_SHORT_NAME);
             arguments.add(outputFile.getAbsolutePath());
             arguments.add("-" + FuncotatorArgumentDefinitions.OUTPUT_FORMAT_LONG_NAME);
@@ -327,7 +327,7 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
         arguments.add("--" + FuncotatorArgumentDefinitions.ALLOW_HG19_GENCODE_B37_CONTIG_MATCHING_LONG_NAME);
 
         arguments.add("--" + FuncotatorArgumentDefinitions.REFERENCE_VERSION_LONG_NAME);
-        arguments.add(FuncotatorArgumentDefinitions.ReferenceVersionType.hg19.toString());
+        arguments.add("hg19");
 
         arguments.add("-" + StandardArgumentDefinitions.OUTPUT_SHORT_NAME);
         arguments.add(outputFile.getAbsolutePath());
@@ -390,7 +390,7 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
 
     @Test(dataProvider = "provideForIntegrationTest")
     public void exhaustiveArgumentTest(final String dataSourcesPath,
-                                       final FuncotatorArgumentDefinitions.ReferenceVersionType refVer,
+                                       final String refVer,
                                        final String referenceFileName,
                                        final String variantFileName,
                                        final String transcriptName,
@@ -408,7 +408,7 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
         arguments.add("--" + FuncotatorArgumentDefinitions.DATA_SOURCES_PATH_LONG_NAME);
         arguments.add(dataSourcesPath);
         arguments.add("--" + FuncotatorArgumentDefinitions.REFERENCE_VERSION_LONG_NAME);
-        arguments.add(refVer.toString());
+        arguments.add(refVer);
         arguments.add("-" + StandardArgumentDefinitions.REFERENCE_SHORT_NAME);
         arguments.add(referenceFileName);
         arguments.add("-" + StandardArgumentDefinitions.VARIANT_SHORT_NAME);

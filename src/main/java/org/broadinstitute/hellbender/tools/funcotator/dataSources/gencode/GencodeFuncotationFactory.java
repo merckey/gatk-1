@@ -1718,7 +1718,7 @@ public class GencodeFuncotationFactory extends DataSourceFuncotationFactory {
         Utils.nonNull( funcotation );
 
         final StringBuilder condensedFuncotationStringBuilder = new StringBuilder();
-        
+
         if ( !funcotation.getVariantClassification().equals(GencodeFuncotation.VariantClassification.IGR) ) {
             condensedFuncotationStringBuilder.append(funcotation.getHugoSymbol());
             condensedFuncotationStringBuilder.append("_");

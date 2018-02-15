@@ -43,6 +43,9 @@ public class FuncotatorArgumentDefinitions {
     public static final String ALLOW_HG19_GENCODE_B37_CONTIG_MATCHING_LONG_NAME = "allow-hg19-gencode-b37-contig-matching";
     public static final boolean ALLOW_HG19_GENCODE_B37_CONTIG_MATCHING_DEFAULT_VALUE = false;
 
+    public static final String HG19_REFERENCE_VERSION_STRING = "hg19";
+    public static final String HG38_REFERENCE_VERSION_STRING = "hg38";
+
     // ------------------------------------------------------------
     // Helper Types:
 
@@ -244,15 +247,6 @@ public class FuncotatorArgumentDefinitions {
             }
             throw new IllegalArgumentException("Unexpected value: " + s);
         }
-    }
-
-    /**
-     * An indicator of the reference version of the data sources to be used for the Funcotator annotations.
-     * This is used to determine from which folder to pull the config file for each data source.
-     */
-    public enum ReferenceVersionType {
-        hg19,
-        hg38
     }
 
     /**

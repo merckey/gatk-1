@@ -231,9 +231,9 @@ public class Funcotator extends VariantWalker {
 
     @Argument(
             fullName =  FuncotatorArgumentDefinitions.REFERENCE_VERSION_LONG_NAME,
-            doc = "The version of the Human Genome reference to use (either hg19 or hg38)."
+            doc = "The version of the Human Genome reference to use (e.g. hg19, hg38, etc.).  This will correspond to a sub-folder of each data source corresponding to that data source for the given reference."
     )
-    protected FuncotatorArgumentDefinitions.ReferenceVersionType referenceVersion;
+    protected String referenceVersion;
 
     @Argument(
             fullName =  FuncotatorArgumentDefinitions.DATA_SOURCES_PATH_LONG_NAME,
@@ -360,7 +360,7 @@ public class Funcotator extends VariantWalker {
         }
 
         if ( allowHg19GencodeContigNamesWithB37 &&
-                (referenceVersion == FuncotatorArgumentDefinitions.ReferenceVersionType.hg19) &&
+                (referenceVersion.equals(FuncotatorArgumentDefinitions.HG19_REFERENCE_VERSION_STRING)) &&
                 (inputReferenceIsB37 == null) ) {
             // NOTE AND WARNING:
             // hg19 is from ucsc. b37 is from the genome reference consortium. ucsc decided the grc version had crap in it, so they blocked out some of the bases, aka "masked" them
@@ -561,7 +561,7 @@ public class Funcotator extends VariantWalker {
      * @param dataSourceDirectories A {@link List} of {@link Path} to the directories containing our data sources.
      * @return The contents of the config files for each of the data sources found in the given {@code dataSourceDirectories}.
      */
-    private Map<Path, Properties> getAndValidateDataSourcesFromPaths(final FuncotatorArgumentDefinitions.ReferenceVersionType refVersion,
+    private Map<Path, Properties> getAndValidateDataSourcesFromPaths(final String refVersion,
                                                                      final List<String> dataSourceDirectories) {
         final Map<Path, Properties> metaData = new LinkedHashMap<>();
 
@@ -581,7 +581,7 @@ public class Funcotator extends VariantWalker {
                 for ( final Path dataSourceTopDir : Files.list(p).filter(Funcotator::isValidDirectory).collect(Collectors.toSet()) ) {
 
                     // Get the path that corresponds to our reference version:
-                    final Path dataSourceDir = dataSourceTopDir.resolve(refVersion.toString());
+                    final Path dataSourceDir = dataSourceTopDir.resolve(refVersion);
 
                     // Make sure that we have a good data source directory:
                     if ( isValidDirectory(dataSourceDir) ) {
@@ -619,7 +619,11 @@ public class Funcotator extends VariantWalker {
             }
         }
 
-        if ( !hasGencodeDataSource ) {
+        // Sanity checks to make sure we actually found our data sources:
+        if ( metaData.size() == 0 ) {
+            throw new UserException("ERROR: Could not find any data sources for given reference: " + refVersion);
+        }
+        else if ( !hasGencodeDataSource ) {
             throw new UserException("ERROR: a Gencode datasource is required!");
         }
 
